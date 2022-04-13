@@ -1,6 +1,5 @@
 {
-    "cmake.configureOnOpen": false,
-    "cmake.sourceDirectory": "${workspaceFolder}/src",
+    "makefile.extensionOutputFolder": "./.vscode",
     "python.autoComplete.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages"
     ],

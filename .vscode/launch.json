@@ -12,11 +12,36 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Current File with profiler",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o", "/tmp/tmp.prof", "${file}"
+            ]
+        },
+        {
+            "name": "Python: testbench",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/caillot/Documents/PhD/Projets/Coop-Evidential-Occupancy-Grid/standalone_project/full_project/testbench.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: testbench with profiler",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o", "/tmp/tmp.prof", "/home/caillot/Documents/PhD/Projets/Coop-Evidential-Occupancy-Grid/standalone_project/full_project/testbench.py"
+            ]
+        },
+        {
             "name": "g++ - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/${fileBasenameNoExtension}",
-            "args": [],
+            "args": ["CXX=g++"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -31,6 +56,27 @@
             ],
             "preLaunchTask": "C/C++: g++ build active file",
             "miDebuggerPath": "/usr/bin/gdb"
+        }, 
+        {
+            "name": "nvcc - Build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "args": ["CXX=nvcc"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++ build active file",
+            "miDebuggerPath": "/usr/bin/cuda-gdb"
         }
     ]
 }
