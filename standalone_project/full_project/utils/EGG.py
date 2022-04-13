@@ -1,25 +1,44 @@
 from typing import Tuple, List
-from vector import vec2
-from Tmat import TMat
-from bbox import Bbox2D
+from utils.vector import vec2
+from utils.Tmat import TMat
+from utils.bbox import Bbox2D
 import numpy as np
-from projector import project_BBox2DOnPlane
-from plucker import plkrPlane
+from utils.projector import project_BBox2DOnPlane
+from utils.plucker import plkrPlane
 from ctypes import *
 from scipy.spatial.transform import Rotation as R
 import json
 from copy import deepcopy
+from utils.global_var import fpSizeMax
 
 
 # Evidential Grid Generator
 class EGG:
+    """
+    Evidential Grid Generator
+    """
+    mapsize:int
+    gridsize:int
+    cellsize: float
+
+
     def __init__(self, mapsize: float, gridsize: int) -> None:
         self.mapsize = mapsize
         self.gridsize = gridsize
         self.cellsize = mapsize / float(gridsize)
 
-    def projector_resterizer(self, agent_out:Tuple[List[Bbox2D], TMat, TMat, str], confjsonpath=None):
-        (bbox_list, kmat, camT, label) = agent_out
+    def projector_resterizer(self, agent_out:Tuple[List[Bbox2D], TMat, TMat, str], confjsonpath=None) -> List[Tuple[List[vec2], str]]:
+        """
+        Project the 2D bounding box on the plane
+
+        Args:
+            agent_out: the output of the agent (bbox, Tmat, Tmat, str)
+            confjsonpath: the path of the configuration file
+
+        Returns:
+            a list of projected bounding box and the name of the object
+        """
+        (bbox_list, kmat, camT, label, _) = agent_out
         list_fp:List[Tuple[List[vec2], str]] = []
         gndPlane = plkrPlane()
 
@@ -28,6 +47,7 @@ class EGG:
 
         newT = camT
 
+        # Add noise of position
         if confjsonpath != None:
             with open(confjsonpath) as json_file:
                 data = json.load(json_file)
@@ -41,26 +61,14 @@ class EGG:
                 noiseR = np.random.normal(loc=r_euler, scale=[noiseFigure['rot_err']['x'], noiseFigure['rot_err']['y'], noiseFigure['rot_err']['z']])
                 newT.tmat[:3, :3] = R.from_euler('xyz', noiseR).as_matrix()
                 newT.tmat[:3, 3] = noiseT
-        
-        # print(newT)
 
         for bbox in bbox_list:
-            fp = project_BBox2DOnPlane(gndPlane, bbox, kmat, camT)
-            coords.append(np.array([(v.get().T)[0] for v in fp]))
-            labels.append(bbox.label)
-            list_fp.append((fp, bbox.label))
+            # project a bbox as a footprint
+            # fp = project_BBox2DOnPlane(gndPlane, bbox, kmat, camT, fpSizeMax={'vehicle': 6.00, 'pedestrian': 1.00})
+            fp = project_BBox2DOnPlane(gndPlane, bbox, kmat, camT, fpSizeMax=fpSizeMax)
 
-        coords = np.array(coords)
-        labels = np.array([1 if l == "vehicle" else 2 for l in labels])
-        # print(coords)
-        # print(labels)
+            # pack everything
+            list_fp.extend(fp)
 
         return list_fp
-
-
-
-
-if __name__ == "__main__":
-    lib = cdll.LoadLibrary('./standalone_project/full_project/src_c/rasterizer.so')
-    lib.bonjour()
 

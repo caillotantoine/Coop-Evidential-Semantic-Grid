@@ -1,21 +1,22 @@
 import numpy as np
-from numpy.core.fromnumeric import size
-from numpy.core.numeric import moveaxis
-from scipy.spatial import transform
-from vector import *
-from bbox import *
-from Tmat import TMat
+from .vector import *
+from .bbox import *
+from .Tmat import TMat
+from .plucker import plkrLine, plkrPlane
+
 import cv2 as cv
+
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from plucker import plkrLine, plkrPlane
+from typing import Tuple, List
 
 import open3d as o3d
 
 def get_o3dgrid(map_size = 70):
-    # Drawing the ground with a grid
-    # Red for X
-    # Green for Y
+    """Drawing the ground with a grid. Red for X and Green for Y
+    Args:
+        map_size (int, optional): The size of the map. Defaults to 70.
+    """
     x_col = [0.5, 0.5, 0.5]
     y_col = [0.5, 0.5, 0.5]
     pointsX = []
@@ -54,6 +55,12 @@ def get_o3dgrid(map_size = 70):
     return [line_setX, line_setY]
 
 def getCwTc():
+    """
+    Get the transformation matrix from the camera to the world frame
+
+    Returns:
+        TMat: Transformation matrix from the camera to the world frame
+    """
     out = TMat()
     # matout = np.array([[0.0,   -1.0,   0.0,   0.0,], [0.0,   0.0,  -1.0,   0.0,], [1.0,   0.0,   0.0,   0.0,], [0.0,   0.0,   0.0,   1.0,]])
     matout = np.array([[0.0,   0.0,   1.0,   0.0,], [-1.0,   0.0,  0.0,   0.0,], [0.0,   -1.0,   0.0,   0.0,], [0.0,   0.0,   0.0,   1.0,]])
@@ -61,6 +68,14 @@ def getCwTc():
     return out
 
 def load_k(path_k) -> TMat:
+    """Load the camera calibration matrix from a file
+    
+    Args:
+        path_k (str): Path to the file containing the camera calibration matrix
+
+    Returns:
+        TMat: The camera calibration matrix
+    """
     k = np.load(path_k)
     kmat = TMat()
     kmat4 = np.identity(4)
@@ -68,9 +83,46 @@ def load_k(path_k) -> TMat:
     kmat.set(kmat4)
     return kmat
 
-def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threashold:float = 0.3) -> Bbox2D:
-    out_bbox = Bbox2D(vec2(0, 0), vec2(5, 5), label=bbox.label)
+def project3Dpoint(point3D:vec4, kmat:TMat, Tcw:TMat) -> vec2:
+    """Project a 3D point into the image plane
     
+    Args:
+        point3D (vec4): The 3D point to project
+        kmat (TMat): The camera calibration matrix
+        Tcw (TMat): The transformation matrix from the camera to the world frame
+
+    Returns:
+        vec2: The 2D point in the image plane
+
+    Exception:
+        ValueError: If the point is behind the camera
+    """
+    cwTc = getCwTc()
+    wTc:TMat = Tcw * cwTc
+    wTc.inv()
+
+    projPts = kmat * (wTc * point3D)
+    if projPts.z() <= 0:
+        raise ValueError("The point is behind the camera")
+    return ().vec3().nvec2()
+
+
+def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threashold:float = 0.3) -> Tuple[Bbox2D, List[vec2]]:
+    """
+    Project a 3D bounding box to the image plane and filter out the points that are not in the image or occluded
+    
+    Args:
+        bbox (Bbox3D): The bounding box to project
+        vPose (TMat): The pose of the vehicle
+        k (TMat): The camera calibration matrix
+        sensorT (TMat): the pose of the sensor
+        img (np.array): The image to project the bounding box on
+        threashold (float, optional): The threshold for occlusion. Defaults to 0.3.
+
+    Returns:
+        Tuple[Bbox2D, List[vec2]]: The projected bounding box and the list of points that are not occluded
+    """
+    out_bbox = Bbox2D(vec2(0, 0), vec2(5, 5), label=bbox.label)
     
     cwTc = getCwTc()
     wTc = sensorT * cwTc
@@ -81,6 +133,12 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     pts_cam:List[vec4] = [wTc * pt4 for pt4 in pts_w]
     pts_proj:List[vec4] = [k * pt4 for pt4 in pts_cam]
     pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in pts_proj]]
+
+    try:
+        pts_2d2:List[vec2] = [project3Dpoint(pt4, k, vPose) for pt4 in pts_w]
+        A = pts_2d2
+    except ValueError:
+        pass
 
     for i in range(len(pts_2d)):
         if pts_proj[i].z() <= 0:
@@ -100,7 +158,9 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     posebbox = out_bbox.get_pose()
     sizebbox = out_bbox.get_size()
 
-    cropped_img = img[int(posebbox.y()):int(posebbox.y()+sizebbox.y()), int(posebbox.x()):int(posebbox.x()+sizebbox.x()), 2]
+    cropped_img = img[int(posebbox.y()):int(posebbox.y()+sizebbox.y()), 
+                      int(posebbox.x()):int(posebbox.x()+sizebbox.x()), 
+                      2]
     
     try:
         # vehicle : 10
@@ -115,9 +175,33 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
         return None
     if ratio <= threashold:
         return None
-    return out_bbox
+    return (out_bbox, pts_2d)
 
-def project_BBox2DOnPlane(plane:plkrPlane, bbox:Bbox2D, kMat:TMat, sensorT:TMat, vMat:TMat = None, vbbox3d:Bbox3D = None, debug = None) -> List[vec2]:
+def project_BBox2DOnPlane(plane:plkrPlane, 
+                          bbox:Bbox2D, 
+                          kMat:TMat, 
+                          sensorT:TMat, 
+                          fpSizeMax=None, 
+                          vMat:TMat = None, 
+                          vbbox3d:Bbox3D = None, 
+                          debug = None) -> List[vec2]:
+
+    """
+    Project a 2D bounding box on a plane (typically, the ground plane)
+
+    Args:
+        plane (plkrPlane): The plane to project the bounding box on
+        bbox (Bbox2D): The bounding box to project
+        kMat (TMat): The camera calibration matrix
+        sensorT (TMat): The pose of the sensor
+        fpSizeMax (vec2, optional): The maximum size of the projected bounding box. If None, no limit are given. Defaults to None.
+        vMat (TMat, optional): The pose of the vehicle. If None, the vehicle is ignored. Defaults to None.
+        vbbox3d (Bbox3D, optional): The 3D bounding box of the vehicle. If None, the vehicle is placed at the origin Defaults to None.
+        debug (bool, optional): Display open3d window. Defaults to None.
+
+    Returns:
+        List[vec2]: The points of projected bounding box
+    """
     invK = deepcopy(kMat)
     invK.inv()
     # print(invK)
@@ -125,37 +209,83 @@ def project_BBox2DOnPlane(plane:plkrPlane, bbox:Bbox2D, kMat:TMat, sensorT:TMat,
     cwTc = getCwTc()
     wTcw = sensorT
     wTc = wTcw * cwTc
-    
 
-    mesh_world = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
-    mesh_camera = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
-    mesh_camera.transform(wTc.get())
+    bboxlabel = bbox.get_label()
+
 
     pts4 = [pt2.vec4(z=1) for pt2 in bbox.get_pts()]
     pts_ip_c = [((invK * p).vec3() * 120).vec4() for p in pts4]
     pts_ip_c_ctrl = [invK * p for p in pts4]
     pts_ip_cw = [(wTc * pt4) for pt4 in pts_ip_c]
     pts_ip_cw_ctrl = [(wTc * pt4) for pt4 in pts_ip_c_ctrl]
+
+
     out_pts:List[vec4] = []
+
     for i, pt in enumerate(pts_ip_cw):
+        # check if the line points toward the sky.
         if pt.z() < pts_ip_cw_ctrl[i].z():
             line = plkrLine(wTc.get_translation(), pts_ip_cw[i]) 
             out_pts.append(plane.intersect(line))
+        
+        # if so, take the point outside the map and fix its height to 0
+        # Yes, this is a cheat trick.
         else:
             p = vec4(x=pt.x(), y=pt.y(), z=0)
             out_pts.append(p)
+
     # lines = [plkrLine(wTc.get_translation(), pt4) for pt4 in pts_ip_cw]
     # out_pts = [plane.intersect(line) for line in lines]
+    # Normalize the points to a correct position in the map
     for i, pt in enumerate(out_pts):
         pt.normalize()
         if debug != None:
             print(pt)
-
     
+    #convert from vec4 to vec2
     out_pts = [pt4.vec3() for pt4 in out_pts]
     out_pts = [pt3.vec2() for pt3 in out_pts]
-    if debug == None:
-        return out_pts
+
+    output:List[Tuple(List[vec2], str)] = []
+
+
+    # Reduce the footprint in function of the class
+    if fpSizeMax != None and bboxlabel in fpSizeMax:
+        sPos = sensorT.get_translation()
+        output.append((out_pts, 'unknown'))
+        # get the closest point distance 
+        dmin = np.inf
+        for pt in out_pts:
+            v = vec3(x=(pt.x()-sPos.x()), y=(pt.y()-sPos.y()), z=1)
+            d = v.get_norm()
+            if d < dmin:
+                dmin = d
+
+        # get distance max in function of the class
+        dmax = dmin+fpSizeMax[bboxlabel]
+        
+        # crop the footprint
+        for i,pt in enumerate(out_pts):
+            v = vec3(x=(pt.x()-sPos.x()), y=(pt.y()-sPos.y()), z=1)
+            d = v.get_norm()
+            if d > dmax:
+                k = dmax / d
+                v = vec3(x=k*v.x(), y=k*v.y(), z=1)
+                vout = vec2(x=v.x()+sPos.x(), y=v.y()+sPos.y())
+                out_pts[i] = vout
+        output.append((out_pts, bboxlabel))
+    else:
+        output.append((out_pts, bboxlabel))
+
+
+    # if not in debug, break and return
+    if debug == None or debug == False:
+        return output
+
+
+    mesh_world = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
+    mesh_camera = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1, origin=[0, 0, 0])
+    mesh_camera.transform(wTc.get())
 
     mesh_ip_c = [o3d.geometry.TriangleMesh.create_sphere(radius=0.1) for pt in pts_ip_c]
     for idx, mesh in enumerate(mesh_ip_c):
@@ -239,7 +369,7 @@ if __name__ == '__main__':
 
     ground = plkrPlane()
     
-    traces = project_BBox2DOnPlane(ground, bbox, k, wTcw, vMat=vMat, vbbox3d=bbox3d, debug=True)
+    traces = project_BBox2DOnPlane(ground, bbox, k, wTcw, vMat=vMat, vbbox3d=bbox3d, fpSizeMax={'vehicle': 6.00, 'pedestrian': 1.00}, debug=False)
     for t in traces:
         print(t)
     

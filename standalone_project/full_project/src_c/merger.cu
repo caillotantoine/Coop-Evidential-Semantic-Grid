@@ -1,5 +1,6 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +18,8 @@
 #define N_CLASSES           8
 
 // CPP function to be available on library front end
-void bonjour_cpp();
-void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out);
+// void bonjour_cpp();
+void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out, float *FE, const int nFE);
 void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method);
 void DST_merger_CUDA_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method);
 
@@ -27,17 +28,11 @@ __host__ __device__ void conjunctive(float *inout_cell, float *cell, int n_elem,
 __host__ __device__ void disjunctive(float *inout_cell, float *cell, int n_elem);
 __host__ __device__ float Konflict(float *inout_cell, float *cell, int n_elem);
 
-// Obsolete function? 
-void set_inter(const char *A, const char *B, char *out);
-void set_union(const char *A, const char *B, char *out);
-bool set_cmp(const char *A, const char *B);
 
 // Interface of the SO library
 extern "C" {
-    void bonjour()
-        {bonjour_cpp();}
-    void mean_merger(unsigned char *masks, int gridsize, int n_agents, float *out)
-        {mean_merger_cpp(masks, gridsize, n_agents, out);}
+    void mean_merger(unsigned char *masks, int gridsize, int n_agents, float *out, float *FE, const int nFE)
+        {mean_merger_cpp(masks, gridsize, n_agents, out, FE, nFE);}
     void DST_merger(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
         {DST_merger_CPP(evid_maps_in, inout, gridsize, nFE, n_agents, method);}
     void DST_merger_CUDA(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
@@ -103,7 +98,7 @@ __host__ __device__ void conjunctive(float *inout_cell, float *cell, int n_elem,
     float K = 0.0;
     if(dempster)
         K = 1.0 / (1.0 - Konflict(inout_cell, cell, n_elem));
-    for (A = 0; A<n_elem; A++)
+    for (A = 1; A<n_elem; A++) // A starts from 1 since there must be A != Ø
     {
         for(B=0; B<n_elem; B++)
         {
@@ -178,17 +173,28 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    char FE[8][4] = {"O", "V", "P", "T", "VP", "VT", "PT", "VPT"};
-    char out[4] = {0};
-    unsigned char mask[5][600][600] = {0};
-    float outt[600][600][3] = {0};
+    
+    // float U[8] = {0.1, 0, 0, 0, 0, 0, 0, 0.9};
+    // float T[8] = {0.05, 0, 0, 0, 0.7, 0.05, 0.05, 0.15};
 
-    mean_merger_cpp((unsigned char *) mask, 600, 5, (float *) outt);
-    set_union(FE[4], FE[5], out);
+    float U[8] = {0.0, 0, 0, 0, 0, 0, 0, 1.0};
+    float T[8] = {0.0, 0, 0, 0, 0.7, 0.05, 0.05, 0.2};
 
-    printf("%s\n", out);
+    // float A[4][8] = {U, U, U, U};
+    // float B[4][8] = {T, T, T, T};
 
-    cout << set_cmp("VP", "PVT") << endl;
+    float out[8] = {0};
+    memcpy(out, U, 8*sizeof(float));
+
+    conjunctive(out, U, 8, true); 
+    conjunctive(out, U, 8, true);
+    conjunctive(out, U, 8, true);
+    conjunctive(out, U, 8, true);
+    conjunctive(out, U, 8, true);
+    conjunctive(out, U, 8, true);
+    conjunctive(out, T, 8, true);
+    conjunctive(out, T, 8, true);
+
 
     
     return 0;
@@ -200,62 +206,36 @@ int main(int argc, char **argv)
 //                      //
 //////////////////////////
 
-// Test - obsolete
-void bonjour_cpp()
-{
-    printf("Bonjour!!!\n");
-}
 
-// Obsolete
-void set_inter(const char *A, const char *B, char *out)
+float get_normFactor(float *FE, const int nFE, int row)
 {
-    int i = 0, j = 0;
-    for(i=0; i<strlen(A); i++)
-    {
-        if(strchr(B, A[i]) != NULL)
-        {
-            out[j] = A[i];
-            j++;
-        }
-    }   
-}
-
-// Obsolete
-void set_union(const char *A, const char *B, char *out)
-{
-    int i = 0, j = strlen(B);
-    out = strcpy(out, B);
-    for(i=0; i<strlen(A); i++)
-    {
-        if(strchr(B, A[i]) == NULL)
-        {
-            out[j] = A[i];
-            j++;
-        }
-    }   
-}
-
-// Obsolete
-bool set_cmp(const char *A, const char *B)
-{
+    float normFactor = 0.0;
     int i = 0;
-    if(strlen(A) != strlen(B))
-        return false;
-
-    for(i = 0; i<strlen(A); i++)
-    {
-        if(strchr(B, A[i]) == NULL)
-            return false;
-    }
-    return true;
+    for (i = 1; i<5; i<<=1)
+        normFactor += FE[row * nFE + i];
+    return 1.0/normFactor;
 }
 
 // Merger code for averaging cells
 
-void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out)
+void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out, float *FE, const int nFE)
 {
-    int l = 0, i = 0, c = 0;
+    int l = 0, i = 0, c = 0, j = 0;
     int idx = 0;
+    float normFactor = 0.0;
+
+    // for(i = 0; i<5; i++)
+    // {
+    //     for(j = 0; j<nFE; j++)
+    //     {
+    //         printf("%2.3f \t", FE[i*nFE + j]);
+    //     }
+    //     printf("\n");
+    //     for(j = 0; j<3; j++)
+    //         printf("%d - %2.3f \t", 1<<j, FE[i * nFE + (1<<j)]);
+    //     printf("\n\n");
+    // }
+
     for(i=0; i<gridsize*gridsize; i++)
     {
         for(l=0; l<n_agents; l++)
@@ -263,27 +243,41 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
             switch(masks[i*n_agents + l])
             {
                 case VEHICLE_MASK:
-                    out[(i*3) + 0] += 1.0;
-                    out[(i*3) + 1] += 0.0;
-                    out[(i*3) + 2] += 0.0;
+                    #define FEROW 1
+                    for(j = 0; j<3; j++)
+                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                    // out[(i*3) + 0] += 1.0;
+                    // out[(i*3) + 1] += 0.0;
+                    // out[(i*3) + 2] += 0.0;
                     break;
 
                 case PEDESTRIAN_MASK:
-                    out[(i*3) + 0] += 0.0;
-                    out[(i*3) + 1] += 1.0;
-                    out[(i*3) + 2] += 0.0;
+                    #define FEROW 2
+                    normFactor = get_normFactor(FE, nFE, FEROW);
+                    for(j = 0; j<3; j++)
+                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                    // out[(i*3) + 0] += 0.0;
+                    // out[(i*3) + 1] += 1.0;
+                    // out[(i*3) + 2] += 0.0;
                     break;
 
                 case TERRAIN_MASK:
-                    out[(i*3) + 0] += 0.0;
-                    out[(i*3) + 1] += 0.0;
-                    out[(i*3) + 2] += 1.0;
+                    #define FEROW 3
+                    normFactor = get_normFactor(FE, nFE, FEROW);
+                    for(j = 0; j<3; j++)
+                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                    // out[(i*3) + 0] += 0.0;
+                    // out[(i*3) + 1] += 0.0;
+                    // out[(i*3) + 2] += 1.0;
                     break;
                 
                 default:
-                    out[(i*3) + 0] += 0.5;
-                    out[(i*3) + 1] += 0.5;
-                    out[(i*3) + 2] += 0.5;
+                    #define FEROW 3
+                    for(j = 0; j<3; j++)
+                        out[(i*3) + j] += 0.5;
+                    // out[(i*3) + 0] += 0.5;
+                    // out[(i*3) + 1] += 0.5;
+                    // out[(i*3) + 2] += 0.5;
                     break;
             }
         }

@@ -4,7 +4,7 @@
 import numpy as np
 from copy import deepcopy
 from typing import List
-from Tmat import TMat
+from utils.Tmat import TMat
 
 
 class vec:
@@ -54,7 +54,7 @@ class vec:
     def normalize(self):
         self.vec = self.get_normalized()
 
-    def get_norm(self):
+    def get_norm(self)->float:
         v = self.get_normalized()
         v = np.transpose(v)
         v = np.square(v)

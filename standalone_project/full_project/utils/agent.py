@@ -1,15 +1,15 @@
 import json
 from os import path, symlink
 import numpy as np
-from Tmat import TMat
-from bbox import Bbox2D, Bbox3D
-from vector import vec2, vec3, vec4
+from utils.Tmat import TMat
+from utils.bbox import Bbox2D, Bbox3D
+from utils.vector import vec2, vec3, vec4
 from typing import List, Tuple
 import cv2 as cv
 from tqdm import tqdm
 
 
-import projector as prj
+import utils.projector as prj
 import matplotlib.pyplot as plt
 
 class Agent:
@@ -80,6 +80,12 @@ class Agent:
                 bbox_pose = vec3(ox, oy, oz)
                 self.bbox3d = Bbox3D(bbox_pose, bboxsize, self.label)
                 self.bbox3d.set_TPose(self.Tpose.get())
+                 
+                #   Fix the Tpose for pedestrian (they're flying)    
+                if self.label == "pedestrian":
+                    self.Tpose.tmat[2:3] = sz
+
+                
 
         return self
 
@@ -137,7 +143,10 @@ class Agent:
 
 
 
-    def get_visible_bbox(self, frame:int, plot:plt = None) -> Tuple[List[Bbox2D], TMat, TMat]:
+    def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat]:
+        """
+        get the visible bounding box from the agent's perspective.
+        """
         self.get_state(frame)
         if self.label == "pedestrian":
             raise Exception("Pedestrian do not have sensors.")
@@ -156,11 +165,16 @@ class Agent:
             img = cv.imread(self.mypath+f'camera_semantic_segmentation/{frame:06d}.png') 
 
             bbox2:List[Bbox2D] = []
+            bbox3pts:List[List[vec2]] = []
             for a in agents:
                 a.get_state(frame)
-                bbox = prj.projector_filter(a.get_bbox3d(), a.get_pose(), k_mat, camPose, img)
+                projected = prj.projector_filter(a.get_bbox3d(), a.get_pose(), k_mat, camPose, img)
+                if projected is None:
+                    continue
+                (bbox, points) = projected
                 # print(f"\t{bbox}")
                 bbox2.append(bbox)
+                bbox3pts.append(points)
 
             # (w,h) = np.shape(img)
             h, w,_ = img.shape
@@ -171,9 +185,9 @@ class Agent:
             bbox2.insert(0, camBBox)
             # print(bbox2)
             
+            img = cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png')
 
-            if plot != None:
-                img = cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png')
+            if drawBBOXonImg:
                 color = (0, 255, 0)
                 thickness = 2
                 for box in bbox2:
@@ -182,11 +196,20 @@ class Agent:
                     # print(pts)
                     for i in range(len(pts)):
                         img = cv.line(img, pts[i], pts[(i+1)%len(pts)], color, thickness)
+                color = (0, 0, 255)
+                thickness = 1
+                for points in bbox3pts:
+                    pts = [tuple(np.transpose(pt.get())[0].astype(int).tolist()) for pt in points]
+                    # print(pts)
+                    for i in range(len(pts)):
+                        img = cv.line(img, pts[i], pts[(i+1)%len(pts)], color, thickness)
+
+            if plot is not None:                    
                 plot.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
                 plot.draw()
                 plt.pause(0.001)
 
-            return (bbox2, k_mat, camPose, self.label)
+            return (bbox2, k_mat, camPose, self.label, cv.cvtColor(img, cv.COLOR_BGR2RGB))
                 
 
 

@@ -1,307 +1,251 @@
-import ctypes
-import multiprocessing
-from turtle import color
-import numpy as np
-from agent import Agent
-from vector import vec2, vec3, vec4
-from Tmat import TMat
-from bbox import Bbox2D, Bbox3D
 from tqdm import tqdm
-from plucker import plkrPlane
-from projector import project_BBox2DOnPlane
-import json
-from typing import List, Tuple
-from EGG import EGG
-from ctypes import *
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
-from merger import mean_merger, mean_merger_fast, DST_merger
-from decision import cred2pign
-import cv2 as cv
-from metrics import TFPN, toOccup
-import csv
-import sys
-import argparse
-from os import path, makedirs
+from cwrap.merger import mean_merger_fast, DST_merger
+from cwrap.decision import cred2pign
+from os import path, makedirs 
+from utils.metrics import create_diffmap, save_map
+from utils.global_var import *
+from pipeline import *
+from utils.recorder import *
+from agents2maps import readFE
+from threading import Thread, Lock
+from copy import deepcopy
+import time
 
-import rasterizer
+import matplotlib.pyplot as plt
 
-MAPSIZE = 120.0
-STEPGRID = 5
-GRIDSIZE = int(MAPSIZE) * STEPGRID
-
-FUS_LUT = {'Dempster': 0, 'Conjunctive': 1, 'Disjunctive': 2}
-LABEL_LUT = {'Vehicle': int('0b01000000', 2), 'Pedestrian': int('0b10000000', 2), 'Terrain': int('0b00000010', 2)}
-DECIS_LUT = {'Avg_Max': -1, 'BetP': 0, 'Bel': 1, 'Pl': 2, 'BBA': 3}
-TFPN_LUT = {'TP': 0, 'TN': 1, 'FP': 2, 'FN': 3}
-
-argparser = argparse.ArgumentParser(description=__doc__)
-argparser.add_argument(
-    '--algo',
-    metavar='A',
-    default='Dempster',
-    help='Choose between Dempster, Conjunctive and Disjunctive (default Dempster).')
-argparser.add_argument(
-    '--mean',
-    metavar='M',
-    type=bool,
-    default=False,
-    help='Compute the mean (default False).')
-argparser.add_argument(
-    '--gui',
-    metavar='G',
-    type=bool,
-    default=False,
-    help='Show the GUI (default False).')
-argparser.add_argument(
-    '--save_img',
-    type=bool,
-    default=False,
-    help='Save maps as images (default False).')
-argparser.add_argument(
-    '--start',
-    metavar='S',
-    type=int,
-    default=10,
-    help='Starting point in the dataset (default 10).')
-argparser.add_argument(
-    '--end',
-    metavar='E',
-    type=int,
-    default=500,
-    help='Ending point in the dataset (default 500).')
-argparser.add_argument(
-    '--dataset_path',
-    default='/home/caillot/Documents/Dataset/CARLA_Dataset_B',
-    help='Path of the dataset.')
-argparser.add_argument(
-    '--save_path',
-    default='/home/caillot/Documents/output_algo/',
-    help='Saving path.')
-
-argparser.add_argument(
-    '--json_path',
-    default='./standalone_project/full_project/configs/config_perfect_full.json',
-    help='Configuration json file path.')
-
-args = argparser.parse_args()
-print(args)
-
-SAVE_PATH = args.save_path
-CPT_MEAN = args.mean
-ALGO = args.algo
-ALGOID = FUS_LUT[ALGO]
-dataset_path:str = args.dataset_path
-
-if args.gui:
-    fig, axes = plt.subplots(2, 3)
-
-if not path.isdir(SAVE_PATH):
-    makedirs(SAVE_PATH)
-
-ANTOINE_M = False
-
-def get_bbox(data):
-    agent, frame = data
-    return agent.get_visible_bbox(frame=frame)
-
-def get_pred(data):
-    agent, frame = data
-    return agent.get_pred(frame=frame)
-
-def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, agent_3D:List[Bbox3D] = None, antoine=False):
-    egg = EGG(mapsize=MAPSIZE, gridsize=(GRIDSIZE))
-    mask = np.zeros(shape=(GRIDSIZE, GRIDSIZE), dtype=np.uint8)
-
-    if agent_out != None:
-        eggout = egg.projector_resterizer(agent_out, confjsonpath=args.json_path)
-        fp_poly = np.array([np.array([(v.get().T)[0] for v in poly], dtype=np.float32) for (poly, _) in eggout])
-        fp_label = np.array([1 if label == 'vehicle' else 2 if label == 'pedestrian' else 3 if label == 'terrain' else 0 for (_, label) in eggout], dtype=
-        np.int32)
-        rasterizer.projector(len(fp_label), fp_label, fp_poly, mask, MAPSIZE, GRIDSIZE)
-    elif agent_3D != None:
-        if antoine == False:
-            mask[:,:] = int('0b00000010', 2)
-        for agent in agent_3D:
-            bboxsize = agent.get_size()
-            label = agent.get_label()
-            poseT = agent.get_TPose()
-            # print(f'{agent.myid} of a size of {agent.get_bbox3d()} at {agent.get_pose()}')
-            # bin_mask = [np.array([1.0, 1.0, 0.0, 1.0]), np.array([1.0, -1.0, 0.0, 1.0]), np.array([-1.0, -1.0, 0.0, 1.0]), np.array([-1.0, 1.0, 0.0, 1.0])]
-            if antoine:
-                bin_mask = [np.array([0.5, -0.5, 0.5, 1.0]), np.array([0.5, -0.5, -0.5, 1.0]), np.array([-0.5, -0.5, -0.5, 1.0]), np.array([-0.5, -0.5, 0.5, 1.0])]
-            else:
-                bin_mask = [np.array([0.5, 0.5, 0.0, 1.0]), np.array([0.5, -0.5, 0.0, 1.0]), np.array([-0.5, -0.5, 0.0, 1.0]), np.array([-0.5, 0.5, 0.0, 1.0])]
-            
-            # print(f'{label} of size {bboxsize} at:\n{poseT}')
-            centered_fps = [(bboxsize.vec4().get().T * m).T for m in bin_mask]
-            # print(centered_fps[0].shape)
-
-            # print(poseT)
-            fps = [poseT @ v for v in centered_fps]
-            # print(fps)
-            if antoine:
-                fps_pix = np.array([np.array((((v * STEPGRID) + (GRIDSIZE / 2)).T)[0][[0, 2]], dtype=int) for v in fps])
-            else:
-                fps_pix = np.array([np.array((((v * STEPGRID) + (GRIDSIZE / 2)).T)[0][:2], dtype=int) for v in fps])
-            # print(fps_pix)
-            cv.fillPoly(mask, pts=[fps_pix], color=(int('0b01000000', 2) if label == 'vehicle' else int('0b10000000', 2)))
-    else: 
-        raise NameError("Both agent_out and agent_3D are set to None. Assign a value to at least one of them.")
-        
-    nFE = 8
-    with open(args.json_path) as json_file:
-        data = json.load(json_file)
-        FE = data['FE_mat']
-        json_file.close()
-
-    # #      Ø    V    P    VP   T    VT   PT   VPT
-    # FE = [[0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.9], # VPT
-    #     [0.1, 0.6, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1], # V
-    #     [0.1, 0.0, 0.6, 0.1, 0.0, 0.0, 0.1, 0.1], # P
-    #     [0.1, 0.0, 0.0, 0.0, 0.6, 0.1, 0.1, 0.1]] # T
-
-    FE = np.array(FE, dtype=np.float32)     
-    evid_map = np.zeros(shape=(GRIDSIZE, GRIDSIZE, nFE), dtype=np.float32)
-
-    rasterizer.apply_BBA(nFE, GRIDSIZE, FE, mask, evid_map)
-    return (mask, evid_map)
-
-
-def record(sem_gnd:np.ndarray, sem_test:np.ndarray, gridsize:int, frame:int):
-    occ_gnd = toOccup(sem_gnd, gridsize)
-    occ_test = toOccup(sem_test, gridsize)
-
-    outs = {'frame': frame}
-    for key in TFPN_LUT:
-        outs[f'occup_{key}'] = TFPN(occ_gnd, occ_test, gridsize, TFPN_LUT[key], 0)
-
-    for keylab in LABEL_LUT:
-        for key_tfpn in TFPN_LUT:
-            outs[f'{keylab}_{key_tfpn}'] = TFPN(sem_gnd, sem_test, gridsize, TFPN_LUT[key_tfpn], LABEL_LUT[keylab])
-
-    return outs
-
-
-
-
-agents:List[Agent] = []
-with open(f"{dataset_path}//information.json") as json_file:
-    info = json.load(json_file)
-    agent_l = info['agents']
-    agents = [Agent(dataset_path=dataset_path, id=idx) for idx, agent in enumerate(agent_l) if agent['type'] != "pedestrian"]
-    agents2gndtruth = [Agent(dataset_path=dataset_path, id=idx) for idx, agent in enumerate(agent_l) if agent['type'] != "infrastructure"]
-
-with open(args.json_path) as json_file:
-    data = json.load(json_file)
-    idx2read = data['index to read'] # [1, 6, 7, 8, 9, 10, 11]
-    json_file.close()
-    if idx2read != None:
-        agents = [agents[i] for i in idx2read]
-
-
-for idx, agent in enumerate(agents):
-    print(f"{idx} : \t{agent}")
+class GUI_State:
+    mutex: Lock
+    quit:bool
+    pause:bool
+    gnd_map:np.ndarray
+    mean_map:np.ndarray
+    dst_map:np.ndarray
+    evid_raw:np.ndarray
+    pov:np.ndarray
+    pov_id:int
+    history:dict
     
-fieldsname = ['frame']
 
-for key in TFPN_LUT:
-    fieldsname.append(f'occup_{key}')
+    def __init__(self) -> None:
+        self.mutex = Lock()
+        self.quit = False
+        self.pause = False
+        self.gnd_map = None
+        self.mean_map = None
+        self.dst_map = None
+        self.evid_raw = None
+        self.history = dict()
+        self.pov = None
+        self.pov_id = 0
+        for decis in DECIS_LUT:
+            self.history[decis] = []
 
-for keylab in LABEL_LUT:
-    for key_tfpn in TFPN_LUT:
-        fieldsname.append(f'{keylab}_{key_tfpn}')
+    def set_pov(self, image:np.ndarray):
+        self.mutex.acquire()
+        self.pov = deepcopy(image)
+        self.mutex.release()
 
-print(fieldsname)
+    def get_pov(self) -> np.ndarray:
+        self.mutex.acquire()
+        image = self.pov
+        self.mutex.release()
+        return image
 
-recfile = open(f'{SAVE_PATH}/avg.csv', mode='w')
-writer = csv.DictWriter(recfile, fieldnames=fieldsname)
-writer.writeheader()
-recfile.close()
 
-for decision_maker in DECIS_LUT:
-    if decision_maker == 'Avg_Max':
-        continue
-    recfile = open(f'{SAVE_PATH}/{ALGO}_{decision_maker}.csv', mode='w')
-    writer = csv.DictWriter(recfile, fieldnames=fieldsname)
-    writer.writeheader()
-    recfile.close()
+    def update(self, gnd_map, mean_map, dst_map, evid_raw):
+        self.mutex.acquire()
+        self.gnd_map = deepcopy(gnd_map)
+        self.mean_map = deepcopy(mean_map)
+        self.dst_map = deepcopy(dst_map)
+        self.evid_raw = deepcopy(evid_raw)
+        self.mutex.release()
+    
+    def update_history(self, key, value):
+        self.mutex.acquire()
+        self.history[key].append(value)
+        self.mutex.release()
 
-pool = Pool(multiprocessing.cpu_count())
-for frame in tqdm(range(args.start, args.end)):
-    data = [(agent, frame) for agent in agents]
-    if ANTOINE_M:
-        bboxes = [a.get_pred(frame) for a in agents]
-        mask_eveid_maps = [generate_evid_grid(agent_3D=d, antoine=True) for d in bboxes]
-    else:
-        bboxes = pool.map(get_bbox, data)
-        mask_eveid_maps = [generate_evid_grid(agent_out=d) for d in bboxes]
-    mask, evid_maps = zip(*mask_eveid_maps)
+    def get_history(self):
+        self.mutex.acquire()
+        history = self.history
+        self.mutex.release()
+        return history
+    
+    def quit_gui(self, event):
+        print('Stopping')
+        self.mutex.acquire()
+        self.quit = True
+        self.mutex.release()
 
-    gnd_agent = [agent.get_state(frame).get_bbox3d() for agent in agents2gndtruth]
-    mask_eveid_maps_GND = generate_evid_grid(agent_3D=gnd_agent)
-    (mask_GND, evid_maps_GND) = mask_eveid_maps_GND
+    def togglePlayPause_gui(self):
+        self.mutex.acquire()
+        self.pause = not self.pause
+        self.mutex.release()
 
-    if CPT_MEAN:
-        mean_map = mean_merger_fast(mask, gridsize=GRIDSIZE)
-        sem_map_mean = cred2pign(mean_map, method=-1)
-        with open(f'{SAVE_PATH}/avg.csv', mode='a') as recfile:
-            writer = csv.DictWriter(recfile, fieldnames=fieldsname)
-            writer.writerow(record(mask_GND, sem_map_mean, GRIDSIZE, frame))
-            recfile.close()
+    def is_quit(self):
+        self.mutex.acquire()
+        quit = self.quit
+        self.mutex.release()
+        return quit
+
+    def is_pause(self):
+        self.mutex.acquire()
+        pause = self.pause
+        self.mutex.release()
+        return pause
+
+
+def pipeline(state:GUI_State):
+    init_out_file() # Initialize the metrics file
+    (every_agents, agents2gndtruth) = read_dataset() # Read the dataset
+    active_agents = get_active_agents(every_agents) # Get the active agents
+    mapcenter = get_mapcenter(every_agents) # Get the map center
+
+    for frame in tqdm(range(args.start, args.end)): # for each frame
         
-        if args.save_img:
-            if not path.isdir(f'{SAVE_PATH}/Mean/RAW/'):
-                makedirs(f'{SAVE_PATH}/Mean/RAW/')
-            if not path.isdir(f'{SAVE_PATH}/Mean/SEM/'):
-                makedirs(f'{SAVE_PATH}/Mean/SEM/')    
-            maprec = record(mask_GND, sem_map_mean, GRIDSIZE, frame)
-            plt.imsave(f'{SAVE_PATH}/Mean/RAW/{frame:06d}.png', mean_map)
-            plt.imsave(f'{SAVE_PATH}/Mean/SEM/{frame:06d}.png', sem_map_mean)
+        while state.is_pause():
+            time.sleep(0.1)
+            if state.is_quit():
+                print('quitted')
+                return
+        if state.is_quit():
+            print('quitted')
+            return
 
+        (mask_GND, _, _) = get_gnd_mask(frame, agents2gndtruth, mapcenter=mapcenter) # Get the ground truth mask
+        (mask, evid_maps, images) = get_local_maps(frame=frame, agents=active_agents, mapcenter=mapcenter) # Get the local maps
+        #================== Start debug VY76R5FGY876T574EFU6
+        #   Role of debug : print 3D bounding boxes + projected footprints in an image. 
+        #                   The image will then be transfered to 
+        state.set_pov(images[3])
 
-    evid_out = DST_merger(evid_maps=list(evid_maps), gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
-    if args.save_img:
-        if not path.isdir(f'{SAVE_PATH}/{ALGO}/RAW/'):
-            makedirs(f'{SAVE_PATH}/{ALGO}/RAW/')
-            plt.imsave(f'{SAVE_PATH}/{ALGO}/RAW/{frame:06d}-v-p-t.png', evid_out[:,:,[1, 2, 4]])
-            plt.imsave(f'{SAVE_PATH}/{ALGO}/RAW/{frame:06d}-vp-vt-pt.png', evid_out[:,:,[3, 5, 6]])
-            plt.imsave(f'{SAVE_PATH}/{ALGO}/RAW/{frame:06d}-vpt.png', evid_out[:,:,7])
+        #================== End debug VY76R5FGY876T574EFU6
+        observed_mask = get_nObserved_mask(frame, mask) # Get the observed mask
 
-    for decision_maker in DECIS_LUT:
-        if decision_maker == 'Avg_Max':
-            continue
+        for i, m in enumerate(mask):
+            save_map(f'{SAVE_PATH}/{i}/', f'{frame:06d}.png', m)
 
-        sem_map = cred2pign(evid_out, method=DECIS_LUT[decision_maker])
-        with open(f'{SAVE_PATH}/{ALGO}_{decision_maker}.csv', mode='a') as recfile:
-            writer = csv.DictWriter(recfile, fieldnames=fieldsname)
-            writer.writerow(record(mask_GND, sem_map, GRIDSIZE, frame))
-            recfile.close()
+        if CPT_MEAN: # If we want to compute the mean method
+            save_map(f'{SAVE_PATH}/GND/', f'{frame:06d}.png', mask_GND, args.save_img) # Save the ground truth map (so we just need to save it once)
+            mean_map = mean_merger_fast(mask, gridsize=GRIDSIZE, FE=readFE()) # Compute the mean map
+            sem_map_mean = cred2pign(mean_map, method=-1) # Compute the semantic map from the mean map
+            save_to_file(frame, 'avg', mask_GND, sem_map_mean, observed_mask) # Save the metrics of the mean method
+            if args.gui:
+                state.update_history('Avg_Max', (frame, record(mask_GND, sem_map_mean, observed_mask, args.cooplvl, GRIDSIZE, frame)['mIoU'])) # Update the history of the mean method
 
-        if args.save_img:
-            if not path.isdir(f'{SAVE_PATH}/{ALGO}/{decision_maker}/'):
-                makedirs(f'{SAVE_PATH}/{ALGO}/{decision_maker}/')
-            plt.imsave(f'{SAVE_PATH}/{ALGO}/{decision_maker}/{frame:06d}.png', sem_map)
+            # save the maps
+            if args.save_img: # If we want to save the maps
+                diff = create_diffmap(mask_GND, sem_map_mean) # Compute the difference map
+                save_map(f'{SAVE_PATH}/Mean/RAW/', f'{frame:06d}.png', mean_map)
+                save_map(f'{SAVE_PATH}/Mean/SEM/', f'{frame:06d}.png', sem_map_mean)
+                save_map(f'{SAVE_PATH}/Mean/Dif/', f'{frame:06d}.png', diff)
 
-
-    if args.gui:
-        if CPT_MEAN:
-            axes[0, 0].imshow(mean_map)
-            axes[0, 0].set_title('Mean map')
-            axes[1, 1].imshow(sem_map_mean)
-            axes[1, 1].set_title('Sem map mean')
+        evid_maps = list(evid_maps) # Convert the evidence maps to a list
+        if args.loopback_evid: 
+            evid_buffer = DST_merger(evid_maps=evid_maps, gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
+            # insert the loopback as first element
+            if type(loopback_evid) != type(None):
+                evid_out = DST_merger(evid_maps=[loopback_evid, evid_buffer], gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
+            else:
+                evid_out = evid_buffer
+            loopback_evid = evid_buffer
         else:
-            axes[0, 0].imshow(np.array(mask)[[0, 1, 2]].transpose(1, 2, 0))
-            axes[0, 0].set_title('Mask')
-            axes[1, 1].imshow(toOccup(sem_map, GRIDSIZE))
-            axes[1, 1].set_title('Occupancy grid')
-        axes[0, 1].imshow(evid_out[:,:,[1, 2, 4]])
-        axes[0, 1].set_title('V, P, T')
-        axes[0, 2].imshow(evid_out[:,:,[3, 5, 6]])
-        axes[0, 2].set_title('VP, VT, PT')
-        axes[1, 0].imshow(mask_GND)
-        axes[1, 0].set_title('Ground truth')
-        axes[1, 2].imshow(sem_map)
-        axes[1, 2].set_title('sem_map evid')
-        fig.suptitle(f'Frame {frame}')
-        plt.pause(0.01)
+            # Merge the evidential map for a given algorithm
+            evid_out = DST_merger(evid_maps=evid_maps, gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
+        # Save the maps      
+        save_map(f'{SAVE_PATH}/{ALGO}/RAW/V-P-T/', f'{frame:06d}.png', evid_out[:,:,[1, 2, 4]], args.save_img)
+        save_map(f'{SAVE_PATH}/{ALGO}/RAW/VP-VT-PT/', f'{frame:06d}.png', evid_out[:,:,[3, 5, 6]], args.save_img)
+        save_map(f'{SAVE_PATH}/{ALGO}/RAW/VPT/', f'{frame:06d}.png', evid_out[:,:,7], args.save_img)
+
+        # Test every decision taking algorithm except average max
+        for decision_maker in DECIS_LUT:
+            if decision_maker == 'Avg_Max':
+                continue
+
+            # fix the global evid. map to a semantic map with a given algoritm
+            sem_map = cred2pign(evid_out, method=DECIS_LUT[decision_maker])
+            save_to_file(frame, f'{ALGO}_{decision_maker}', mask_GND, sem_map, observed_mask)
+            if args.gui:
+                state.update_history(decision_maker, (frame, record(mask_GND, sem_map, observed_mask, args.cooplvl, GRIDSIZE, frame)['mIoU'])) # Update the history
+
+            if args.save_img:
+                diff = create_diffmap(mask_GND, sem_map)
+                save_map(f'{SAVE_PATH}/{ALGO}/{decision_maker}/', f'{frame:06d}.png', sem_map)
+                save_map(f'{SAVE_PATH}/{ALGO}/{decision_maker}/Dif/', f'{frame:06d}.png', diff)
+
+
+
+if __name__ == '__main__':
+    state = GUI_State()
+    if args.gui:
+        # fig = plt.figure()
+        fig, axes = plt.subplots(2) # (2, 3)
+        plt.ion()
+        fig.canvas.mpl_connect('close_event', state.quit_gui)
+
+    if not path.isdir(SAVE_PATH):
+        makedirs(SAVE_PATH)
+    pipeline_p = Thread(target=pipeline, args=(state,))
+    pipeline_p.start()
+
+    while not state.is_quit():
+        try:
+            hist = state.get_history()
+            axes[0].cla()
+            for decis in DECIS_LUT:
+                (f, curve) = zip(*hist[decis])
+                axes[0].plot(f, curve, label=decis)
+                axes[0].legend(loc='lower left')
+        except Exception as e:
+            pass
+
+        try:
+            axes[1].cla()
+            axes[1].imshow(state.get_pov())
+            axes[1].set_title('Point of view from agent 0')
+            axes[1].get_xaxis().set_visible(False)
+            axes[1].get_yaxis().set_visible(False)
+        except Exception as e:
+            pass
+
+
+        plt.draw()
+        try:
+            plt.pause(0.5)
+        except Exception as e:
+            pass
+
+    pipeline_p.join()
+
+
+
+# # FOR EACH FRAME OF A SELECTION
+# for frame in tqdm(range(args.start, args.end)):
+
+#     # Manage the GUI
+#     if args.gui:
+#         if CPT_MEAN:
+#             axes[0, 0].imshow(mask[0])
+#             axes[0, 0].set_title('Mean map')
+#             axes[1, 1].imshow(mask[1])
+#             axes[1, 1].set_title('Sem map mean')
+#         else:
+#             axes[0, 0].imshow(np.array(mask)[[0, 1, 2]].transpose(1, 2, 0))
+#             axes[0, 0].set_title('Mask')
+#             if type(loopback_evid) != type(None):
+#                 axes[1, 1].imshow(loopback_evid[:,:,[1, 2, 4]])
+#                 axes[1, 1].set_title('Loopback')
+#             else:
+#                 axes[1, 1].imshow(toOccup(sem_map, GRIDSIZE))
+#                 axes[1, 1].set_title('Occupancy grid')
+#         axes[0, 1].imshow(evid_out[:,:,[1, 2, 4]])
+#         axes[0, 1].set_title('V, P, T')
+#         axes[0, 2].imshow(evid_out[:,:,[3, 5, 6]])
+#         axes[0, 2].set_title('VP, VT, PT')
+#         axes[1, 0].imshow(mask_GND)
+#         axes[1, 0].set_title('Ground truth')
+#         axes[1, 2].imshow(sem_map)
+#         axes[1, 2].set_title('sem_map evid')
+#         fig.suptitle(f'Frame {frame}')
+#         plt.pause(0.01)
