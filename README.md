@@ -1,26 +1,27 @@
-# upstream-coop-loc
-This project use the 2 dimenssional bounding boxes from cameras of road side units (RSU) and on-board units (OBU) to generate an [occupancy grid map](#evidential-occupancy-grid) or a [semantic occupancy map](#evidential-semantic-occupancy-grid) of a scene. We focused our work on situations at intersection and especially at round-abouts. 
+# Cooperative Evidential Semantic Grid
 
-<!-- The first itteration of this project is available at [Evidential Occupancy Grid](#evidential-occupancy-grid) section. The second itteration featuring semantic aspect is available at [Evidential Semantic Occupancy Grid](#evidential-semantic-occupancy-grid) section. -->
+## Introduction
+This project use the 2 dimenssional bounding boxes from cameras of road side units (RSU) and on-board units (OBU) to generate an semantic occupancy map of a scene. We focused our work on situations at intersection and especially at round-abouts. 
 
-## Evidential Occupancy Grid
-This first iteration of the project is based on ROS. However, ROS induce stability issues because of the parallel runing process desynchronising. Thus, the second iteration of the project has been developped in Python / C++ solely. 
+## Run the code
+*NB: For now, the code may only work on linux.* 
 
+### Virtual environement
+The project runs inside a virtual environement which is included in this repository. Run the following command to enter in the virtual environement.
 
-## Evidential Semantic Occupancy Grid
+```bash
+source venv/bin/activate
+```
 
+### Using the scripts
+<!-- TODO -->
+This section will be updated as the project progresses.
 
-### Location of the source code
-The code for this part of the project is located in the folder `standalone_project/full_project`.
+### Entry point
+<!-- TODO -->
+The entry point of the project is the Sources/testbench.py script.
 
-### Source files 
+### Unit tests
 
-#### testbench.py
-Testbench is the entry point of the project. It parses the command line, and link the blocks together to for the pipeline. The reading of the dataset is also done in this file as well as the recordings and the GUI management. 
-
-#### EGG.py
-Evidential Grid Generator create an evidential map container and provide back-projection and rasterisation tools. Noise of position is applied in this file. 
-
-#### projector.py
-This file host the back-projection code based on Plücker's coordinates. It also hosts tools to manage matrix, to display in open3D the projection, and a filter to ensure the bounding box is well fitted in the image. `project_BBox2DOnPlane` is the most important function to seek.
-
+## Documentation
+Some documentation is available in the Sources/html folder. 

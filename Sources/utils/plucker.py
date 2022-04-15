@@ -1,5 +1,5 @@
 import numpy as np
-from utils.vector import vec4
+from vector import vec4
 
 class Plucker:
     def get(self):

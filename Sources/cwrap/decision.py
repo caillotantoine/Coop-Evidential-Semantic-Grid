@@ -4,7 +4,7 @@ from typing import List
 from copy import deepcopy
 
 
-decision = cdll.LoadLibrary('/home/caillot/Documents/PhD/Projets/Coop-Evidential-Occupancy-Grid/standalone_project/full_project/src_c/decision.so')
+decision = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/decision.so')
 
 
 #  void decision(float *evid_map_in, unsigned char *sem_map, int gridsize, int nFE, int method)

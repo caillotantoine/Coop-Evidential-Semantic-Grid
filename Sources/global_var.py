@@ -1,4 +1,4 @@
-from utils.args import argparser
+from args import argparser
 from multiprocessing import Pool, cpu_count
 
 # Initial map descriptors

@@ -1,8 +1,12 @@
+"""
+Set of function for projection.
+"""
+
 import numpy as np
-from .vector import *
-from .bbox import *
-from .Tmat import TMat
-from .plucker import plkrLine, plkrPlane
+from vector import *
+from bbox import *
+from Tmat import TMat
+from plucker import plkrLine, plkrPlane
 
 import cv2 as cv
 

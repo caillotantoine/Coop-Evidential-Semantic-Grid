@@ -1,6 +1,6 @@
 import csv
-from utils.global_var import *
-from utils.metrics import record
+from global_var import *
+from metrics import record
 import numpy as np
 
 def init_out_file():

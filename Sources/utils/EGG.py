@@ -1,15 +1,14 @@
 from typing import Tuple, List
-from utils.vector import vec2
-from utils.Tmat import TMat
-from utils.bbox import Bbox2D
+from vector import vec2
+from Tmat import TMat
+from bbox import Bbox2D
 import numpy as np
-from utils.projector import project_BBox2DOnPlane
-from utils.plucker import plkrPlane
+from projector import project_BBox2DOnPlane
+from plucker import plkrPlane
 from ctypes import *
 from scipy.spatial.transform import Rotation as R
 import json
 from copy import deepcopy
-from utils.global_var import fpSizeMax
 
 
 # Evidential Grid Generator
@@ -27,13 +26,14 @@ class EGG:
         self.gridsize = gridsize
         self.cellsize = mapsize / float(gridsize)
 
-    def projector_resterizer(self, agent_out:Tuple[List[Bbox2D], TMat, TMat, str], confjsonpath=None) -> List[Tuple[List[vec2], str]]:
+    def projector_resterizer(self, agent_out:Tuple[List[Bbox2D], TMat, TMat, str], confjsonpath=None, fpSizeMax=None) -> List[Tuple[List[vec2], str]]:
         """
         Project the 2D bounding box on the plane
 
         Args:
             agent_out: the output of the agent (bbox, Tmat, Tmat, str)
             confjsonpath: the path of the configuration file
+            fpSizeMax: the maximum size of the projected bounding box
 
         Returns:
             a list of projected bounding box and the name of the object

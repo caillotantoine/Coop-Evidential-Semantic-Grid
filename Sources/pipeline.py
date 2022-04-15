@@ -1,13 +1,13 @@
 from matplotlib.pyplot import draw
 from utils.agent import Agent
-from utils.global_var import dataset_path, pool
+from global_var import dataset_path, pool
 import json
 from typing import List, Tuple
 from agents2maps import generate_evid_grid
 from utils.vector import vec2, vec3, vec4
 from utils.Tmat import TMat
-from utils.global_var import *
-from utils.metrics import create_diffmap, record, nObservMask, save_map
+from global_var import *
+from metrics import create_diffmap, record, nObservMask, save_map
 import numpy as np
 from utils.projector import getCwTc
 from utils.Tmat import TMat

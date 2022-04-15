@@ -1,6 +1,6 @@
 import numpy as np
-from utils.vector import vec2, vec3, vec4
-from utils.Tmat import TMat
+from vector import vec2, vec3, vec4
+from Tmat import TMat
 from typing import List
 
 class Bbox:

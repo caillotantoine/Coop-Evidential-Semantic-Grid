@@ -3,7 +3,7 @@ from ctypes import *
 
 from utils.vector import vec2
 
-rasterizer = cdll.LoadLibrary('./standalone_project/full_project/src_c/rasterizer.so')
+rasterizer = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/rasterizer.so')
 rasterizer.test_read_write.argtypes = [c_int,
                                        np.ctypeslib.ndpointer(dtype=np.float32),
                                        np.ctypeslib.ndpointer(dtype=np.int32),

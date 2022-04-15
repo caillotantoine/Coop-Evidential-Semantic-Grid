@@ -3,7 +3,7 @@ from ctypes import *
 from typing import List
 from copy import deepcopy
 
-merger = cdll.LoadLibrary('./standalone_project/full_project/src_c/merger.so')
+merger = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/merger.so')
 
 #  void mean_merger(unsigned char *masks, int gridsize, int n_agents, float *out)
 merger.mean_merger.argtypes = [np.ctypeslib.ndpointer(dtype=np.uint8), c_int, c_int, np.ctypeslib.ndpointer(dtype=np.float32), np.ctypeslib.ndpointer(dtype=np.float32), c_int] 

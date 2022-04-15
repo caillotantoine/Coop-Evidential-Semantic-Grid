@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 from cwrap.merger import mean_merger_fast, DST_merger
 from cwrap.decision import cred2pign
 from os import path, makedirs 
-from utils.metrics import create_diffmap, save_map
-from utils.global_var import *
+from metrics import create_diffmap, save_map
+from global_var import *
 from pipeline import *
-from utils.recorder import *
+from recorder import *
 from agents2maps import readFE
 from threading import Thread, Lock
 from copy import deepcopy

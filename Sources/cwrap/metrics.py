@@ -1,7 +1,7 @@
 import numpy as np
 from ctypes import *
 
-metrics = cdll.LoadLibrary('/home/caillot/Documents/PhD/Projets/Coop-Evidential-Occupancy-Grid/standalone_project/full_project/src_c/metrics.so')
+metrics = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/metrics.so')
 
 
 # #  void TFPN(unsigned char *truth, unsigned char *test, int gridsize, unsigned char TFPN_sel, unsigned char label)
