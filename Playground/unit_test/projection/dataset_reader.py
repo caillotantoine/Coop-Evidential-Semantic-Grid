@@ -17,7 +17,7 @@ def get_camera_matrix(file_path:str) -> np.ndarray:
     """
     return np.load(file_path)
 
-def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -> BoundingBox:
+def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -> BoundingBox:
     """
     Get the bounding box of a vehicle in a frame
 
@@ -29,8 +29,13 @@ def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -> B
         BoundingBox: Bounding box of the vehicle in the frame containing the transformation matrix of the vehicle in the world frame (left handed)
          
     """
-    with open(f'{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json') as f:
-        rawdata = json.load(f)
+
+    if old:
+        with open(f'{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json') as f:
+            rawdata = json.load(f)
+    else:
+        with open(f'{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json') as f:
+            rawdata = json.load(f)
 
     vehicle_pose = np.array(rawdata["vehicle"]["T_Mat"])
     """Transformation matrix from the vehicle frame to the world frame, left handed"""
@@ -51,7 +56,7 @@ def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -> B
 
     return bbox
 
-def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -> np.ndarray:
+def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -> np.ndarray:
     """
     Get the camera pose of a vehicle in a frame
 
@@ -62,10 +67,16 @@ def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:in
     Returns:
         np.ndarray: Transformation matrix from the camera to the vehicle frame (left handed)
     """
-    with open(f'{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json') as f:
-        rawdata = json.load(f)
+    if old:
+        with open(f'{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json') as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata["sensor"]["T_Mat"])
+    else:
+        with open(f'{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json') as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata["sensors"][0]["T_Mat"])
 
-    camera_pose = np.array(rawdata["sensor"]["T_Mat"])
+    
     """Transformation matrix from the vehicle frame to the world frame, left handed"""
     return camera_pose
 

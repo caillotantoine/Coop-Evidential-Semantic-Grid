@@ -19,7 +19,6 @@ class State:
     mutex: Lock
     """Mutex to read and write the State object"""
 
-
     def __init__(self, datasets_folder: str = '/Users/caillotantoine/Datasets', dataset_name: str = 'CARLA_Dataset_A', frame: int = 180):
         self.datasets_folder = datasets_folder
         self.dataset_name = dataset_name
@@ -53,56 +52,45 @@ def project_bbox3D_img(bbox:BoundingBox, camera_pose:np.ndarray, camera_matrix:n
     Returns:
         np.ndarray: Image with the bounding box projected
     """
+
+    # Get the matrix to transform the points from the world referential to the camera referential
     cwTc = getCwTc()
     wTc = camera_pose @ cwTc
     cTw = np.linalg.inv(wTc)
 
+    # Get the points of the bounding box in the world referential
     bbox_pts = bbox.get_point_world_RH()
     cam_pts:List[Tuple(int, int)] = []
     for pt in bbox_pts:
-        cwTc = getCwTc() 
-        wTc = camera_pose @ cwTc
-        cTw = np.linalg.inv(wTc)
-
-        print(pt)
-
+        # Transform the point from the world referential to the camera referential
         pt_cam_ref = cTw @ pt.get_array4()
 
-        print(pt_cam_ref)
+        # if the point is behind the camera
+        if pt_cam_ref[2] < 0:
+            return img
 
+        # Project the point in the image plane
         pt_cam = camera_matrix @ pt_cam_ref[:3,:]
-        pt_cam = pt_cam / pt_cam[2]
+        pt_cam = pt_cam / pt_cam[2] # Normalize the point (z = 1)
 
+        # Convert the point to pixel coordinates
         cam_pts.append((int(pt_cam[0]), int(pt_cam[1])))
 
+    # Draw the bounding box (some lines are forgotten and added later)
     for i in range(len(cam_pts)):
         cv.line(img, cam_pts[i], cam_pts[(i+1)%len(cam_pts)], (0,255,0), 2)
 
+    # Add the extra lines to the bounding box
     cv.line(img, cam_pts[0], cam_pts[3], (0,255,0), 2)
     cv.line(img, cam_pts[2], cam_pts[5], (0,255,0), 2)
     cv.line(img, cam_pts[1], cam_pts[6], (0,255,0), 2)
     cv.line(img, cam_pts[4], cam_pts[7], (0,255,0), 2)
 
-    # vec0 = vec3()
-    # vec0.x = 0.0
-    # vec0.y = 0.0
-    # vec0.z = 0.7
-
-    # wTv =  left2RightHand(bbox.pose)
-    # v_center = wTv @ vec0.get_array4()
-
-    # v_cam = cTw @ v_center
-
-    # v_image = camera_matrix @ v_cam[:3,:]
-    # v_image = v_image / v_image[2]
-
-    # cv.circle(img, (int(v_image[0]), int(v_image[1])), 30, (0,0,255), -1)
-
     return img
     
 
 
-def draw_scene(state: State) -> np.ndarray:
+def draw_scene_oldDataset(state: State) -> np.ndarray:
     """
     Read the dataset and draw the scene
 
@@ -129,8 +117,47 @@ def draw_scene(state: State) -> np.ndarray:
     return img
 
 
+def draw_scene_newDataset(state: State) -> np.ndarray:
+    """
+    Read the dataset and draw the scene
+
+    Args:
+        state: State object
+
+    Returns:
+        np.ndarray: Image of the scene
+    """
+    datasets_folder, dataset_name, frame = state.read_vars()
+
+    V0_bbox = get_bbox(datasets_folder, dataset_name, 'V000', frame, old=False)
+    V1_bbox = get_bbox(datasets_folder, dataset_name, 'V001', frame, old=False) 
+    V2_camera_pose = get_camera_pose(datasets_folder, dataset_name, 'V002', frame, old=False)
+    V2_camera_pose = left2RightHand(V2_camera_pose)
+    k = get_camera_matrix(f'{datasets_folder}/{dataset_name}/V002/camera_rgb/cameraMatrix.npy')
+
+    img = cv.imread(f'{datasets_folder}/{dataset_name}/V002/camera_rgb/{frame:06d}.png')
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+
+    img = project_bbox3D_img(V0_bbox, V2_camera_pose, k, img)
+    img = project_bbox3D_img(V1_bbox, V2_camera_pose, k, img)
+
+    return img
+
+def draw_scene(state: State) -> np.ndarray:
+    """
+    Read the dataset and draw the scene
+
+    Args:
+        state: State object
+    
+    Returns:
+        np.ndarray: Image of the scene
+    """
+    return draw_scene_newDataset(state)
+
 def main():
     state = State()
+    state.dataset_name = 'CARLA_Dataset_original'
     fig, ax = plt.subplots(2, gridspec_kw={'height_ratios': [7, 1]})
     # plt.ion()
     img = draw_scene(state)
