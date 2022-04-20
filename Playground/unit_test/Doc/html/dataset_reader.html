@@ -46,20 +46,26 @@ def get_camera_matrix(file_path:str) -&gt; np.ndarray:
     &#34;&#34;&#34;
     return np.load(file_path)
 
-def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -&gt; BoundingBox:
+def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -&gt; BoundingBox:
     &#34;&#34;&#34;
     Get the bounding box of a vehicle in a frame
 
     Args:
         vehicle (str): Name of the vehicle (e.g. &#39;V0&#39;)
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         BoundingBox: Bounding box of the vehicle in the frame containing the transformation matrix of the vehicle in the world frame (left handed)
          
     &#34;&#34;&#34;
-    with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
-        rawdata = json.load(f)
+
+    if old:
+        with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+    else:
+        with open(f&#39;{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
 
     vehicle_pose = np.array(rawdata[&#34;vehicle&#34;][&#34;T_Mat&#34;])
     &#34;&#34;&#34;Transformation matrix from the vehicle frame to the world frame, left handed&#34;&#34;&#34;
@@ -80,21 +86,28 @@ def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -&gt
 
     return bbox
 
-def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -&gt; np.ndarray:
+def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Get the camera pose of a vehicle in a frame
 
     Args:
         vehicle (str): Name of the vehicle (e.g. &#39;V0&#39;)
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         np.ndarray: Transformation matrix from the camera to the vehicle frame (left handed)
     &#34;&#34;&#34;
-    with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
-        rawdata = json.load(f)
+    if old:
+        with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata[&#34;sensor&#34;][&#34;T_Mat&#34;])
+    else:
+        with open(f&#39;{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata[&#34;sensors&#34;][0][&#34;T_Mat&#34;])
 
-    camera_pose = np.array(rawdata[&#34;sensor&#34;][&#34;T_Mat&#34;])
+    
     &#34;&#34;&#34;Transformation matrix from the vehicle frame to the world frame, left handed&#34;&#34;&#34;
     return camera_pose
 
@@ -123,7 +136,7 @@ if __name__ == &#34;__main__&#34;:
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="dataset_reader.get_bbox"><code class="name flex">
-<span>def <span class="ident">get_bbox</span></span>(<span>datasets_folder: str, dataset_name: str, vehicle: str, frame: int) ‑> <a title="bbox.BoundingBox" href="bbox.html#bbox.BoundingBox">BoundingBox</a></span>
+<span>def <span class="ident">get_bbox</span></span>(<span>datasets_folder: str, dataset_name: str, vehicle: str, frame: int, old: bool = True) ‑> <a title="bbox.BoundingBox" href="bbox.html#bbox.BoundingBox">BoundingBox</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the bounding box of a vehicle in a frame</p>
@@ -133,6 +146,8 @@ if __name__ == &#34;__main__&#34;:
 <dd>Name of the vehicle (e.g. 'V0')</dd>
 <dt><strong><code>frame</code></strong> :&ensp;<code>int</code></dt>
 <dd>Frame to observe</dd>
+<dt><strong><code>old</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, use the old dataset format</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -143,20 +158,26 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -&gt; BoundingBox:
+<pre><code class="python">def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -&gt; BoundingBox:
     &#34;&#34;&#34;
     Get the bounding box of a vehicle in a frame
 
     Args:
         vehicle (str): Name of the vehicle (e.g. &#39;V0&#39;)
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         BoundingBox: Bounding box of the vehicle in the frame containing the transformation matrix of the vehicle in the world frame (left handed)
          
     &#34;&#34;&#34;
-    with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
-        rawdata = json.load(f)
+
+    if old:
+        with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+    else:
+        with open(f&#39;{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
 
     vehicle_pose = np.array(rawdata[&#34;vehicle&#34;][&#34;T_Mat&#34;])
     &#34;&#34;&#34;Transformation matrix from the vehicle frame to the world frame, left handed&#34;&#34;&#34;
@@ -215,7 +236,7 @@ if __name__ == &#34;__main__&#34;:
 </details>
 </dd>
 <dt id="dataset_reader.get_camera_pose"><code class="name flex">
-<span>def <span class="ident">get_camera_pose</span></span>(<span>datasets_folder: str, dataset_name: str, vehicle: str, frame: int) ‑> numpy.ndarray</span>
+<span>def <span class="ident">get_camera_pose</span></span>(<span>datasets_folder: str, dataset_name: str, vehicle: str, frame: int, old: bool = True) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the camera pose of a vehicle in a frame</p>
@@ -225,6 +246,8 @@ if __name__ == &#34;__main__&#34;:
 <dd>Name of the vehicle (e.g. 'V0')</dd>
 <dt><strong><code>frame</code></strong> :&ensp;<code>int</code></dt>
 <dd>Frame to observe</dd>
+<dt><strong><code>old</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, use the old dataset format</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -235,21 +258,28 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int) -&gt; np.ndarray:
+<pre><code class="python">def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:bool = True) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Get the camera pose of a vehicle in a frame
 
     Args:
         vehicle (str): Name of the vehicle (e.g. &#39;V0&#39;)
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         np.ndarray: Transformation matrix from the camera to the vehicle frame (left handed)
     &#34;&#34;&#34;
-    with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
-        rawdata = json.load(f)
+    if old:
+        with open(f&#39;{datasets_folder}/{dataset_name}/Embed/{vehicle}/VehicleInfo/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata[&#34;sensor&#34;][&#34;T_Mat&#34;])
+    else:
+        with open(f&#39;{datasets_folder}/{dataset_name}/{vehicle}/infos/{frame:06d}.json&#39;) as f:
+            rawdata = json.load(f)
+            camera_pose = np.array(rawdata[&#34;sensors&#34;][0][&#34;T_Mat&#34;])
 
-    camera_pose = np.array(rawdata[&#34;sensor&#34;][&#34;T_Mat&#34;])
+    
     &#34;&#34;&#34;Transformation matrix from the vehicle frame to the world frame, left handed&#34;&#34;&#34;
     return camera_pose</code></pre>
 </details>

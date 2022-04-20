@@ -35,7 +35,8 @@ links-as-notes: true
 >         datasets_folder: str,
 >         dataset_name: str,
 >         vehicle: str,
->         frame: int
+>         frame: int,
+>         old: bool = True
 >     ) ‑> bbox.BoundingBox
 
 
@@ -51,6 +52,10 @@ Args
 
 **```frame```** :&ensp;<code>int</code>
 :   Frame to observe
+
+
+**```old```** :&ensp;<code>bool</code>
+:   If True, use the old dataset format
 
 
 
@@ -103,7 +108,8 @@ Returns
 >         datasets_folder: str,
 >         dataset_name: str,
 >         vehicle: str,
->         frame: int
+>         frame: int,
+>         old: bool = True
 >     ) ‑> numpy.ndarray
 
 
@@ -119,6 +125,10 @@ Args
 
 **```frame```** :&ensp;<code>int</code>
 :   Frame to observe
+
+
+**```old```** :&ensp;<code>bool</code>
+:   If True, use the old dataset format
 
 
 

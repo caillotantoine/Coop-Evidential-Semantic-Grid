@@ -56,6 +56,66 @@ Returns
 
 
     
+### Function `draw_scene_newDataset` {#id}
+
+
+
+
+>     def draw_scene_newDataset(
+>         state: projection.State
+>     ) ‑> numpy.ndarray
+
+
+Read the dataset and draw the scene
+
+
+Args
+------
+
+**```state```**
+:   State object
+
+
+
+Returns
+------
+
+<code>np.ndarray</code>
+:   Image of the scene
+
+
+
+    
+### Function `draw_scene_oldDataset` {#id}
+
+
+
+
+>     def draw_scene_oldDataset(
+>         state: projection.State
+>     ) ‑> numpy.ndarray
+
+
+Read the dataset and draw the scene
+
+
+Args
+------
+
+**```state```**
+:   State object
+
+
+
+Returns
+------
+
+<code>np.ndarray</code>
+:   Image of the scene
+
+
+
+    
 ### Function `main` {#id}
 
 

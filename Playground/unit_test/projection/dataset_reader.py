@@ -24,6 +24,7 @@ def get_bbox(datasets_folder:str, dataset_name:str, vehicle:str, frame:int, old:
     Args:
         vehicle (str): Name of the vehicle (e.g. 'V0')
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         BoundingBox: Bounding box of the vehicle in the frame containing the transformation matrix of the vehicle in the world frame (left handed)
@@ -63,6 +64,7 @@ def get_camera_pose(datasets_folder:str, dataset_name:str, vehicle:str, frame:in
     Args:
         vehicle (str): Name of the vehicle (e.g. 'V0')
         frame (int): Frame to observe
+        old (bool): If True, use the old dataset format
     
     Returns:
         np.ndarray: Transformation matrix from the camera to the vehicle frame (left handed)
