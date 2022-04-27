@@ -19,7 +19,7 @@ class State:
     mutex: Lock
     """Mutex to read and write the State object"""
 
-    def __init__(self, datasets_folder: str = '/Users/caillotantoine/Datasets', dataset_name: str = 'CARLA_Dataset_A', frame: int = 180):
+    def __init__(self, datasets_folder: str = '/home/caillot/Documents/Datasets', dataset_name: str = 'CARLA_Dataset_A', frame: int = 180):
         self.datasets_folder = datasets_folder
         self.dataset_name = dataset_name
         self.frame = frame
