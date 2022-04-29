@@ -3,8 +3,9 @@
 
 // #include <opencv2/opencv.hpp>
 
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+// #include <opencv2/ cv.hpp>
+#include <imgproc/imgproc.hpp>
+#include <highgui.hpp>
 
 #define MAPSIZE (120.0)
 #define GRIDSIZE (120*5)
