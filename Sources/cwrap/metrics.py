@@ -1,7 +1,9 @@
 import numpy as np
 from ctypes import *
+import pathlib
 
-metrics = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/metrics.so')
+path_to_src_c = pathlib.Path(__file__).parent.parent.joinpath("src_c/").resolve().as_posix()
+metrics = cdll.LoadLibrary(path_to_src_c + '/metrics.so')
 
 
 # #  void TFPN(unsigned char *truth, unsigned char *test, int gridsize, unsigned char TFPN_sel, unsigned char label)

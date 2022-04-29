@@ -1,10 +1,12 @@
+from importlib.resources import path
 import numpy as np
 from ctypes import *
 from typing import List
 from copy import deepcopy
+import pathlib
 
-
-decision = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/decision.so')
+path_to_src_c = pathlib.Path(__file__).parent.parent.joinpath("src_c/").resolve().as_posix()
+decision = cdll.LoadLibrary(path_to_src_c + '/decision.so')
 
 
 #  void decision(float *evid_map_in, unsigned char *sem_map, int gridsize, int nFE, int method)

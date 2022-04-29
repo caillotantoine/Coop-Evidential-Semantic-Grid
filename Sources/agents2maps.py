@@ -1,4 +1,4 @@
-from  utils.global_var import *
+from  global_var import *
 from utils.Tmat import TMat
 from utils.EGG import EGG
 from typing import List, Tuple

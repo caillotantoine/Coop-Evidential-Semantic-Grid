@@ -4,3 +4,5 @@ matplotlib
 pandas
 opencv-python
 pdoc3
+tqdm
+open3d

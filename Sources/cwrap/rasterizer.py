@@ -2,8 +2,12 @@ import numpy as np
 from ctypes import *
 
 from utils.vector import vec2
+import pathlib
+cmod = 'rasterizer.so'
+path_to_cmod = pathlib.Path(__file__).parent.parent.joinpath("src_c/" + cmod).resolve().as_posix()
+print(path_to_cmod)
+rasterizer = cdll.LoadLibrary(path_to_cmod)
 
-rasterizer = cdll.LoadLibrary('/Users/caillotantoine/Documents/Thèse/Projets/Coop-Evidential-Semantic-Grid/Sources/src_c/rasterizer.so')
 rasterizer.test_read_write.argtypes = [c_int,
                                        np.ctypeslib.ndpointer(dtype=np.float32),
                                        np.ctypeslib.ndpointer(dtype=np.int32),

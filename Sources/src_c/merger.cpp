@@ -1,6 +1,3 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,12 +18,11 @@
 // void bonjour_cpp();
 void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out, float *FE, const int nFE);
 void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method);
-void DST_merger_CUDA_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method);
 
 // Merging functions, either for CUDA and CPP
-__host__ __device__ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster);
-__host__ __device__ void disjunctive(float *inout_cell, float *cell, int n_elem);
-__host__ __device__ float Konflict(float *inout_cell, float *cell, int n_elem);
+void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster);
+void disjunctive(float *inout_cell, float *cell, int n_elem);
+float Konflict(float *inout_cell, float *cell, int n_elem);
 
 
 // Interface of the SO library
@@ -35,8 +31,6 @@ extern "C" {
         {mean_merger_cpp(masks, gridsize, n_agents, out, FE, nFE);}
     void DST_merger(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
         {DST_merger_CPP(evid_maps_in, inout, gridsize, nFE, n_agents, method);}
-    void DST_merger_CUDA(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
-        {DST_merger_CUDA_CPP(evid_maps_in, inout, gridsize, nFE, n_agents, method);}
 }
 
 //////////////////////////
@@ -48,9 +42,9 @@ extern "C" {
 // TODO : Doesn't work. Seem to only process the first agent, thus, no merging done. 
 //   NOTE : I certainly messed up with memory management in somewhere.
 
-__global__ void conjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+void conjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
 {
-    const long i = threadIdx.x + blockDim.x * blockIdx.x;
+    const long i = 0;
     int j = 0;
     if(i < (gridsize * gridsize))
     {
@@ -61,9 +55,9 @@ __global__ void conjunctive_kernel(float *evid_maps_in, float *inout, const int 
     }
 }
 
-__global__ void dempster_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+void dempster_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
 {
-    const long i = threadIdx.x + blockDim.x * blockIdx.x;
+    const long i = 0;
     int j = 0;
     if(i < (gridsize * gridsize))
     {
@@ -72,9 +66,9 @@ __global__ void dempster_kernel(float *evid_maps_in, float *inout, const int gri
     }
 }
 
-__global__ void disjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+void disjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
 {
-    const long i = threadIdx.x + blockDim.x * blockIdx.x;
+    int i = 0;
     int j = 0;
     if(i < (gridsize * gridsize))
     {
@@ -90,7 +84,7 @@ __global__ void disjunctive_kernel(float *evid_maps_in, float *inout, const int 
 //                       //
 ///////////////////////////
 
-__host__ __device__ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
+void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
 {
     int A = 0, B = 0, C = 0, i = 0;
     float buf[N_CLASSES] = {0};
@@ -120,7 +114,7 @@ __host__ __device__ void conjunctive(float *inout_cell, float *cell, int n_elem,
     // memcpy(inout_cell, buf, sizeof(float)*n_elem);
 }
 
-__host__ __device__ void disjunctive(float *inout_cell, float *cell, int n_elem)
+void disjunctive(float *inout_cell, float *cell, int n_elem)
 {
     int A = 0, B = 0, C = 0, i=0;
     float buf[N_CLASSES] = {0};
@@ -145,7 +139,7 @@ __host__ __device__ void disjunctive(float *inout_cell, float *cell, int n_elem)
     // memcpy(inout_cell, buf, sizeof(float)*n_elem);
 }
 
-__host__ __device__ float Konflict(float *inout_cell, float *cell, int n_elem)
+float Konflict(float *inout_cell, float *cell, int n_elem)
 {
     int B = 0, C = 0;
     float res = 0;
@@ -317,52 +311,6 @@ void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, in
         }   
     }
 
-}
-
-// Merger function to merge the cells using Dempster Shaffer Theory with CUDA
-
-void DST_merger_CUDA_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
-{
-    float *dev_evid_map = NULL;
-    float *dev_inout = NULL;
-
-    const int gridwidth_d1 = 1 + (((gridsize*gridsize)-1) / CUDA_BLOCKWIDTH);
-    const dim3 gridwidth(gridwidth_d1, 1, 1);
-    const dim3 blockwidth(CUDA_BLOCKWIDTH, 1, 1);
-
-    cudaMalloc(&dev_evid_map, sizeof(float)*gridsize*gridsize*n_agents*nFE);
-    cudaMalloc(&dev_inout, sizeof(float)*gridsize*gridsize*nFE);
-
-    cudaMemcpy(dev_evid_map, evid_maps_in, sizeof(float)*gridsize*gridsize*n_agents*nFE, cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_inout, inout, sizeof(float)*gridsize*gridsize*nFE, cudaMemcpyHostToDevice);
-
-
-    switch(method)
-    {
-        case CONJUNCTIVE:
-            conjunctive_kernel <<<gridwidth, blockwidth>>> (evid_maps_in, inout, gridsize, nFE, n_agents);
-            break;
-        
-        case DISJUNCTIVE:
-            disjunctive_kernel <<<gridwidth, blockwidth>>> (evid_maps_in, inout, gridsize, nFE, n_agents);
-            break;
-
-        case DEMPSTER:
-            dempster_kernel <<<gridwidth, blockwidth>>> (evid_maps_in, inout, gridsize, nFE, n_agents);
-            break;
-
-        default:
-            printf("No fusion method for the following value: %d", method);
-            break;
-    }
-
-    cudaDeviceSynchronize();
-
-    cudaMemcpy(evid_maps_in, dev_evid_map, sizeof(float)*gridsize*gridsize*n_agents*nFE, cudaMemcpyDeviceToHost);
-    cudaMemcpy(inout, dev_inout, sizeof(float)*gridsize*gridsize*nFE, cudaMemcpyDeviceToHost);
-
-    cudaFree(dev_evid_map);
-    cudaFree(dev_inout);
 }
 
 

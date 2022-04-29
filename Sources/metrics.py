@@ -2,7 +2,7 @@ from os import makedirs, path
 import matplotlib.pyplot as plt
 import numpy as np
 from cwrap.metrics import TFPN, toOccup
-from utils.global_var import *
+from global_var import *
 from typing import List
 
 def IoU(TP:int, FP:int, FN:int) -> float:

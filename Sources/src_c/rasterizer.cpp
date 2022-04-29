@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// #include <opencv2/opencv.hpp>
+
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
 
 #define MAPSIZE (120.0)
 #define GRIDSIZE (120*5)
@@ -21,6 +20,7 @@ void bonjour_cpp();
 void projector_cpp(int len, int* labels, float* fp_vec, unsigned char* map, float ox, float oy, float mapsize, int gridsize);
 unsigned char* test_read_write_cpp (int len, float *fp_poly, int *label, unsigned char *out);
 void apply_BBA_cpp(const int nFE, const int gridsize, float *FE, unsigned char *map, float *evid_map, bool CUDA);
+
 
 extern "C" {
     void bonjour()

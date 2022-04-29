@@ -52,4 +52,4 @@ CATKIN_IGNORE
 
 .DS_Store
 
-venv/
+venv*/
