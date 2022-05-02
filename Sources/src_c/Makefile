@@ -6,7 +6,9 @@ target_1=rasterizer
 target_2=merger
 target_3=decision
 
-targets := $(shell echo *.cpp)
+# targets := decision merger metrics rasterizer seg_filter
+
+targets := $(shell echo *.cpp )
 
 # gcc -shared -Wl,-soname,PixAvg -o PixAvg.so -fPIC fastAverage.c
 # --compiler-options '-fPIC'
@@ -18,17 +20,19 @@ targets := $(shell echo *.cpp)
 
 # all: $(target_1).so $(target_1) $(target_2) $(target_2).so $(target_3) $(target_3).so
 
-all: $(targets:.cpp=) $(targets:.cpp=.so)
+# g++ -o rasterizer rasterizer.cpp `pkg-config --cflags --libs opencv4`
+print-%  : ; @echo $* = $($*)
 
-%: %.o 
-	$(CXX) -o $@ $(CFLAGS) $(LIBS) $?
+# all: $(targets:.cpp=) $(targets:.cpp=.so)
 
-%.so: %.o
-	$(CXX) -fPIC -shared $(CFLAGS) $(LIBS) $? -o $@ 
-	nm -gD $@ | grep ' T ' | grep -v '_Z'
+all: $(targets:.cpp=.so) $(targets:.cpp=.out)
 
-%.o: %.cpp
-	$(CXX) -std=c++11 -c -g -fPIC $(CFLAGS) $(LIBS) $?
+%.out: %.cpp
+	$(CXX) -o $@ -std=c++11 -g -fdiagnostics-color=always -Wall $? `pkg-config --cflags --libs opencv4`
+
+%.so: %.cpp
+	$(CXX) -o $@ -g -std=c++11 -fPIC -shared -fdiagnostics-color=always -Wall $? `pkg-config --cflags --libs opencv4`
+	nm -gD $@ | grep ' T ' | grep -v '_Z' | cut -d' ' -f3
 
 clean:
-	$(RM) % *.o *.so
+	$(RM) *.out *.o *.so

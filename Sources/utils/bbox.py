@@ -1,3 +1,4 @@
+from telnetlib import TM
 import numpy as np
 from utils.vector import vec2, vec3, vec4
 from utils.Tmat import TMat
@@ -35,10 +36,15 @@ class Bbox:
     def set_rotation(self, rotation):
         self.rotation = rotation
 
-    def set_TPose(self, TPose):
+    def set_TPose(self, TPose:TMat):
+        """Apply a Tpose
+
+        Args:
+            TPose (Tmat): Must be right handed
+        """
         self.TPose = TPose
 
-    def get_TPose(self):
+    def get_TPose(self) -> TMat:
         return self.TPose
 
 class Bbox3D(Bbox):
@@ -46,19 +52,20 @@ class Bbox3D(Bbox):
         super().__init__(pose, size, None, label)
 
     # From a set of points in 3D, find the bounding box
-    def set_from_pts(self, points: List[vec3]):
-        lpts = []
-        for v in points:
-            lpts.append(np.transpose(v.get())[0])
-        lpts = np.array(lpts)
-        ox = np.amin(lpts[:, 0])
-        sx = np.amax(lpts[:, 0]) - np.amin(lpts[:, 0])
-        oy = np.amin(lpts[:, 1])
-        sy = np.amax(lpts[:, 1]) - np.amin(lpts[:, 1])
-        oz = np.amin(lpts[:, 2])
-        sz = np.amax(lpts[:, 2]) - np.amin(lpts[:, 2])
-        self.pose = vec3(ox, oy,  oz)
-        self.size = vec3(sx, sy,  sz)
+    # DEPRECATED, MUST NOT BE USED
+    # def set_from_pts(self, points: List[vec3]):
+    #     lpts = []
+    #     for v in points:
+    #         lpts.append(np.transpose(v.get())[0])
+    #     lpts = np.array(lpts)
+    #     ox = np.amin(lpts[:, 0])
+    #     sx = np.amax(lpts[:, 0]) - np.amin(lpts[:, 0])
+    #     oy = np.amin(lpts[:, 1])
+    #     sy = np.amax(lpts[:, 1]) - np.amin(lpts[:, 1])
+    #     oz = np.amin(lpts[:, 2])
+    #     sz = np.amax(lpts[:, 2]) - np.amin(lpts[:, 2])
+    #     self.pose = vec3(ox, oy,  oz)
+    #     self.size = vec3(sx, sy,  sz)
 
     # Provide a set of points to draw in space
     def get_pts(self) -> List[vec3]:
@@ -72,6 +79,16 @@ class Bbox3D(Bbox):
         lpts.append(vec3(self.pose.x() + self.size.x(), self.pose.y(), self.pose.z() + self.size.z()))
         lpts.append(vec3(self.pose.x(), self.pose.y(), self.pose.z() + self.size.z()))
         return lpts
+
+    def get_pts_world(self) -> List[vec3]:
+        out:List[vec3] = []
+        lpts = self.get_pts()
+        for pt in lpts:
+            v4:vec4 = pt.vec4()
+            v_w:vec4 = self.TPose * v4
+            out.append(v_w.nvec3())
+        return out
+
 
 class Bbox2D(Bbox):
     def __init__(self, pose:vec2, size:vec2, label:str) -> None:

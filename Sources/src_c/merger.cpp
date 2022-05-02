@@ -70,6 +70,7 @@ void disjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, c
 {
     int i = 0;
     int j = 0;
+
     if(i < (gridsize * gridsize))
     {
         for(j = 0; j < n_agents; j++)

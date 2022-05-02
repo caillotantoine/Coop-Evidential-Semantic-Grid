@@ -77,14 +77,11 @@ class Agent:
                 bboxsize = vec3(sx*2.0, sy*2.0, sz*2.0)
                 bbox_pose = vec3(ox, oy, oz)
                 self.bbox3d = Bbox3D(bbox_pose, bboxsize, self.label)
-                self.bbox3d.set_TPose(self.Tpose.get())
+                self.bbox3d.set_TPose(self.Tpose)
                  
                 #   Fix the Tpose for pedestrian (they're flying)    
                 if self.label == "pedestrian":
                     self.Tpose.tmat[2:3] = sz
-
-                
-
         return self
 
         # DEBUG
@@ -129,7 +126,9 @@ class Agent:
                     cnt += 1
 
                     bbox = Bbox3D(vec3(Tpose[0][3], Tpose[1][3], Tpose[2][3]), vec3(dim[0], dim[1], dim[2]), label=label)
-                    bbox.set_TPose(Tpose)
+                    bbox_pose = TMat()
+                    bbox_pose.set(Tpose)
+                    bbox.set_TPose(bbox_pose)
                     boxes.append(bbox)
                     # print(dim)
                     # print(label)
@@ -139,7 +138,13 @@ class Agent:
             return boxes
         return None
 
-
+    def get_kmat(self, raw=False, rgbcam=False) -> np.ndarray:
+        if rgbcam:
+            kmat_path = self.mypath + "/camera_rgb/cameraMatrix.npy"
+        else:
+            kmat_path = self.mypath + "/camera_semantic_segmentation/cameraMatrix.npy"
+        k_mat = prj.load_k(kmat_path, raw)
+        return k_mat
 
     def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat]:
         """

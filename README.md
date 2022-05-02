@@ -6,19 +6,21 @@ This project use the 2 dimenssional bounding boxes from cameras of road side uni
 ## installation
 
 ### APT
-To compile and run the CPP libraries, you'ill need to install *opencv* and *cuda-toolkit*. You will also need python 3.9. 
+To compile and run the CPP libraries, you'ill need to install *opencv*. You will also need python 3.9. 
 ```bash
 sudo apt update
-sudo apt install libopencv-dev python3-opencv nvidia-cuda-toolkit
-sudo apt-get install python3.9-tk
+sudo apt install libopencv-dev python3-opencv
 sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt install python3.9
-sudo apt install python3.9-pip
-sudo apt install python3.9-distutils
-sudo apt install python3.9-venv
+sudo apt install python3.9 python3.9-tk python3.9-distutils python3.9-venv
 ```
 
-### PIP
+### Create and configure the venv
+A Python 3.9 virtual environment is advised. Run the following command in the Source directory of the project.
+```bash
+python3.9 -m venv venv-project
+source venv-project/bin/activate
+pip install -r requirements.txt
+``` 
 
 
 ### VSCODE Extession

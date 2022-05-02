@@ -73,9 +73,9 @@ class vec:
         vsize = self.vec.size
         for i, n in enumerate(self.vec):
             if i != vsize-1:
-                out = out + "%.3f, "%n
+                out = out + "%.2e, "%n
             else:
-                out = out + "%.3f>"%n
+                out = out + "%.2e>"%n
         return out
 
     def __add__(self, other):

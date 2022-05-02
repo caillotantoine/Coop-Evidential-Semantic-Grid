@@ -71,7 +71,7 @@ def getCwTc():
     out.set(matout)
     return out
 
-def load_k(path_k) -> TMat:
+def load_k(path_k, out_raw=False) -> TMat:
     """Load the camera calibration matrix from a file
     
     Args:
@@ -81,10 +81,14 @@ def load_k(path_k) -> TMat:
         TMat: The camera calibration matrix
     """
     k = np.load(path_k)
+    if out_raw:
+        return k
+
     kmat = TMat()
     kmat4 = np.identity(4)
     kmat4[:3, :3] = k
     kmat.set(kmat4)
+    
     return kmat
 
 def project3Dpoint(point3D:vec4, kmat:TMat, Tcw:TMat) -> vec2:

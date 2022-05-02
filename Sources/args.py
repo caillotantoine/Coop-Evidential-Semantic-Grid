@@ -58,7 +58,7 @@ argparser.add_argument(
     help='Ending point in the dataset (default 500).')
 argparser.add_argument(
     '--dataset_path',
-    default='/home/caillot/Documents/Dataset/CARLA_Dataset_original',
+    default='/home/caillot/Documents/Datasets/CARLA_Dataset_original',
     help='Path of the dataset.')
 argparser.add_argument(
     '--save_path',
@@ -67,5 +67,5 @@ argparser.add_argument(
 
 argparser.add_argument(
     '--json_path',
-    default='./standalone_project/full_project/configs/config_perfect_full_testBBA15.json',
+    default='./Sources/configs/config_perfect_full_testBBA15.json',
     help='Configuration json file path.')
