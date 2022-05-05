@@ -12,21 +12,22 @@ import numpy as np
 from utils.projector import getCwTc
 from utils.Tmat import TMat
 import cv2 as cv
+from utils.bbox import Bbox2D, Bbox3D
 
 # for parallel processing. 
 # depackage the data to fit the classical argument disposition.
-def get_bbox(data):
+def get_bbox(data:Tuple[Agent, int, bool]) -> Tuple[List[Bbox2D], TMat, TMat]:
     agent, frame, drawOnImg = data
     return agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=drawOnImg) # Set plot to plt to show the images with the bounding boxes drawn.
 
-def get_pred(data):
+def get_pred(data:Tuple[Agent, int]) -> List[Bbox3D]:
     agent, frame = data
     return agent.get_pred(frame=frame)
 
 ####
 ####    Processing for each agents
 ####
-def get_bbox_par(data, parallel = False):
+def get_bbox_par(data:Tuple[Agent, int, bool], parallel = False) -> List[Tuple[List[Bbox2D], TMat, TMat]]:
     if parallel:
         return pool.map(get_bbox, data)
     else:
