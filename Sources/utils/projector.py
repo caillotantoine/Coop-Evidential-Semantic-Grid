@@ -156,17 +156,12 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     #     if pts_proj[i].z() <= 0:
     #         return None
 
-    # out_bbox.set_from_pts(pts_2d)
+    out_bbox.set_from_pts(pts_2d)
 
     (h, w, _) = img.shape
     center:vec2 = out_bbox.get_pose() + (out_bbox.get_size() / 2.0)
     if not (center.x() >= 0.0 and center.x() <= w and center.y() >= 0.0 and center.y() <= h):
-        pass
-        # return None
-    #     pass
-    #     # return out_bbox
-    # else:
-    #     return None
+        return None
 
     posebbox = out_bbox.get_pose()
     sizebbox = out_bbox.get_size()
@@ -185,11 +180,11 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
         ratio = N_detected / cropped_img.size
         # print(f'In {cropped_img.size} pix, deteceted {pix} with {N_detected} of {bbox.get_label()} with a ratio of {ratio*100.0}%')
     except:
-        pass
-        # return None
+        # pass
+        return None
 
-    # if ratio <= threashold:
-    #     return None
+    if ratio <= threashold:
+        return None
     return (out_bbox, pts_2d)
 
 def project_BBox2DOnPlane(plane:plkrPlane, 

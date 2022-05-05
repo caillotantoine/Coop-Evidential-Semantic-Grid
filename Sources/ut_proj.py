@@ -15,6 +15,8 @@ import numpy as np
 from projection.bbox import BoundingBox as verif_Bbox
 from projection.dataset_reader import get_bbox, get_camera_pose
 from projection import matrix_utils
+import cv2 as cv
+import matplotlib.pyplot as plt
 
 dataset_path = "/home/caillot/Documents/Datasets/CARLA_Dataset_original"
 
@@ -170,6 +172,8 @@ def UT_0001(frame=130):
     pov_agent.get_state(frame)
     pov_agent_pose = pov_agent.get_sensor_pose(0)
 
+    img = pov_agent.get_rgb(frame)
+
     cwTw = getCwTc()
     wTc = pov_agent_pose * cwTw
     cTw = wTc.inv()
@@ -181,6 +185,7 @@ def UT_0001(frame=130):
         # print(bboxes[i])
         # print(vehiclesUT[i])
         bbox = bboxes[i].get_pts_world()
+        prev:vec2
         for j in range(8):
             pt4 = bbox[j].vec4()
             pt_cam_ref = cTw * pt4
@@ -190,6 +195,14 @@ def UT_0001(frame=130):
 
             pt_test = project3Dpoint(pt4, krgb, pov_agent_pose)
 
+            color = (0, 255, 0)
+            thickness = 1
+
+            if not (j == 0):
+                img = cv.line(img, (int(prev.x()), int(prev.y())), (int(pt_cam2.x()), int(pt_cam2.y())), color, thickness)
+
+            prev = pt_cam2
+
             if np.allclose(pt_test.get(), pt_cam2.get()):
                 print("pt_cam2: \033[92mpassed\033[0m")
             else:
@@ -197,13 +210,23 @@ def UT_0001(frame=130):
                 print(pt_test)
                 print(pt_cam2)
                 return False
+    plt.imshow(img)
+    plt.show()
+        
+    return True
+
+def UT_0002(frame=130):
+    pov_agent = Agent(dataset_path=dataset_path, id=3) # V2 -> id = 3
+    # pov_agent.get_state(frame)
+    pov_agent.get_visible_bbox(frame, plt, True)
+
     return True
 
 
 def main():
     failcnt = 0
     for i in range(100, 150, 1):
-        if UT_0001(i):
+        if UT_0002(i):
             print(f"UT_0000 {i:02d}: \033[92mpassed\033[0m")
         else:
             print(f"UT_0000 {i:02d}: \033[91mFAILED\033[0m")

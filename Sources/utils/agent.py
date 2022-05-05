@@ -56,6 +56,7 @@ class Agent:
             #   Get pose of the sensors
             #
             if self.label == "vehicle" or self.label == "infrastructure":
+                self.sensorTPoses.clear()
                 for sens in state_json["sensors"]:
                     pose = np.array(sens['T_Mat'])
                     out = TMat()
@@ -101,11 +102,11 @@ class Agent:
     def get_pose(self) -> TMat:
         return self.Tpose
 
-    def get_rgb(self, frame=None) -> np.ndarray:
-        if frame == None:
-            return None
-        img = cv.imread(f'{self.mypath}camera_rgb/{frame:06d}.png')
-        return img
+    # def get_rgb(self, frame=None) -> np.ndarray:
+    #     if frame == None:
+    #         return None
+    #     img = cv.imread(f'{self.mypath}camera_rgb/{frame:06d}.png')
+    #     return img
 
     def get_pred(self, frame:int) -> List[Bbox3D]:
         self.get_state(frame)
@@ -139,7 +140,16 @@ class Agent:
             return boxes
         return None
 
-    def get_kmat(self, raw=False, rgbcam=False) -> np.ndarray:
+    def get_kmat(self, raw=False, rgbcam=False) -> np.ndarray or TMat:
+        """Get the camera matrix of the agent.
+
+        Args:
+            raw (bool, optional): Output a np.ndarray format. Defaults to False.
+            rgbcam (bool, optional): read the rgb cam matrix of the segmentation semantic camera matrix. Defaults to False.
+
+        Returns:
+            np.ndarray or TMat: Camera matrix of the agent.
+        """
         if rgbcam:
             kmat_path = self.mypath + "/camera_rgb/cameraMatrix.npy"
         else:
@@ -148,21 +158,67 @@ class Agent:
         return k_mat
 
     def get_sensor_pose(self, id:int) -> TMat:
+        """Get the pose of one of the agent's sensor
+
+        Args:
+            id (int): the id of the sensor
+
+        Returns:
+            TMat: the pose of the sensor
+        """
+        if id == None:
+            raise ValueError("id must be an integer")
+        if id >= len(self.sensorTPoses):
+            raise ValueError(f"Sensor id {id} is out of range.")
         return self.sensorTPoses[id]
 
-    def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat]:
+    def get_sem(self, frame:int) -> np.ndarray:
+        """Read the image of the semantic segmentation folder
+
+        Args:
+            frame (int): frame number
+
+        Returns:
+            np.ndarray: image
+        """
+        if frame == None:
+            raise ValueError("Frame number must be specified.")
+        return cv.imread(self.mypath+f'camera_semantic_segmentation/{frame:06d}.png') 
+
+    def get_rgb(self, frame:int) -> np.ndarray:
+        """Read the image of the rgb folder
+
+        Args:
+            frame (int): frame number
+
+        Returns:
+            np.ndarray: image
+        """
+        if frame == None:
+            raise ValueError("Frame number must be specified.")
+        return cv.cvtColor(cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png'), cv.COLOR_BGR2RGB)
+
+
+    def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat, str, np.ndarray]:
         """
         get the visible bounding box from the agent's perspective.
         """
-        self.get_state(frame)
         if self.label == "pedestrian":
             raise Exception("Pedestrian do not have sensors.")
-
-
         k_mat = self.get_kmat()
-        # np.load(kmat_path)
-        # print(k_mat)
+
+
+        # ================================================================ BUG GFYYITDFDUYGUFRTYFHJBKJGH75664ERD
+        # cam_pose does not seem to be updated 
+
+        print(f'get_visible_bbox frame {frame}')
+        self.get_state(frame)
         camPose = self.get_sensor_pose(0)
+        print(camPose.get_translation())
+
+
+        # ================================================================ END BUG GFYYITDFDUYGUFRTYFHJBKJGH75664ERD
+
 
         with open(self.dataset_json_path) as dataset_json:
             raw_json = json.load(dataset_json)
@@ -170,6 +226,8 @@ class Agent:
             #every idx where idx != my id and where type is not an infrastructure
             visible_user_idx:int = [idx for idx, data in enumerate(raw_json["agents"]) if (data["type"]!="infrastructure" and idx != self.myid)]
             agents = [Agent(self.dataset_path, idx) for idx in visible_user_idx]
+            for agent in agents:
+                agent.get_state(frame)
 
             img = cv.imread(self.mypath+f'camera_semantic_segmentation/{frame:06d}.png') 
 
@@ -177,7 +235,7 @@ class Agent:
             bbox3pts:List[List[vec2]] = []
             for a in agents:
                 a.get_state(frame)
-                print(f'Frame {frame} - {a}')
+                # print(f'Frame {frame} - {a}')
                 projected = prj.projector_filter(a.get_bbox3d(), a.get_pose(), k_mat, camPose, img)
                 if projected is None:
                     continue
@@ -197,6 +255,7 @@ class Agent:
             # print(bbox2)
             
             img = cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png')
+            img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 
             if drawBBOXonImg:
                 # Bounding box 2D
@@ -219,11 +278,11 @@ class Agent:
                         img = cv.line(img, pts[i], pts[(i+1)%len(pts)], color, thickness)
 
             if plot is not None:                    
-                plot.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
+                plot.imshow(img)
                 plot.draw()
                 plt.pause(0.001)
 
-            return (bbox2, k_mat, camPose, self.label, cv.cvtColor(img, cv.COLOR_BGR2RGB))
+            return (bbox2, k_mat, camPose, self.label, img)
                 
 
 

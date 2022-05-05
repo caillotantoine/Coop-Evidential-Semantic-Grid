@@ -13,11 +13,14 @@ from utils.projector import getCwTc
 from utils.Tmat import TMat
 import cv2 as cv
 from utils.bbox import Bbox2D, Bbox3D
+import matplotlib.pyplot as plt
 
 # for parallel processing. 
 # depackage the data to fit the classical argument disposition.
 def get_bbox(data:Tuple[Agent, int, bool]) -> Tuple[List[Bbox2D], TMat, TMat]:
     agent, frame, drawOnImg = data
+    print(f"get_bbox frame {frame}")
+    agent.get_state(frame)
     return agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=drawOnImg) # Set plot to plt to show the images with the bounding boxes drawn.
 
 def get_pred(data:Tuple[Agent, int]) -> List[Bbox3D]:
@@ -49,43 +52,55 @@ def read_dataset() -> Tuple[List[Agent], List[Agent]]:
 
 def get_local_maps(frame:int, agents:List[Agent], mapcenter:vec2):
     # Every agent + given frame ID
-    data = [(agent, frame, True) for agent in agents]
+    # data = [(agent, frame, True) for agent in agents]
     # from the dataset, retrieve the 2D bounding box
-    bboxes = get_bbox_par(data)
+
+    print(f"get_local_maps frame {frame}")
+    bboxes = [agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=True) for agent in agents]
+    (bbox_list, kmat, camT, label, img) = zip(*bboxes)
+
+    camTnp = camT[3].get_translation()
+    print(camTnp)
+    # bboxes = get_bbox_par(data, False)
     # create the evidential map + the mask for each agent
     mask_eveid_maps = [generate_evid_grid(agent_out=d, mapcenter=mapcenter) for d in bboxes]
     # datashape conversion
     # [(mask, evid_map, polygons)] -> [mask], [evid_maps]
+
+
+
     mask, evid_maps, polygons = zip(*mask_eveid_maps)
     #================== Start debug VY76R5FGY876T574EFU6
     #   Role of debug : print 3D bounding boxes + projected footprints in an image. 
     #                   The image will then be transfered to 
-    images:List[np.ndarray] = []
-    (bbox_list, kmat, camT, label, img) = zip(*bboxes)
-    img = list(img)
-    for idx, _ in enumerate(agents):
-        sensorT = camT[idx]
-        cwTc:TMat = getCwTc()
-        wTc:TMat = sensorT * cwTc
-        wTc.inv()   
-        k = kmat[idx]
+
+
+    # images:List[np.ndarray] = []
+    # (bbox_list, kmat, camT, label, img) = zip(*bboxes)
+    # img = list(img)
+    # for idx, _ in enumerate(agents):
+    #     sensorT = camT[idx]
+    #     cwTc:TMat = getCwTc()
+    #     wTc:TMat = sensorT * cwTc
+    #     wTc.inv()   
+    #     k = kmat[idx]
 
         
-        color = (0, 0, 255)
-        thickness = 3
+    #     color = (0, 0, 255)
+    #     thickness = 3
 
-        for i, polygon in enumerate(polygons[idx]):
-            if i == 0:
-                continue
-            vertex = polygon[0]
-            vertInCam = [wTc * v for v in vertex]
-            projVertInImg = [k * v for v in vertInCam]
-            pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in projVertInImg]]
-            imgpts = [tuple(np.transpose(pt.vec)[0].astype(int).tolist()) for pt in pts_2d]
-            for i in range(len(imgpts)):
-                img[idx] = cv.line(img[idx], imgpts[i], imgpts[(i+1)%len(imgpts)], color, thickness)
+    #     for i, polygon in enumerate(polygons[idx]):
+    #         if i == 0:
+    #             continue
+    #         vertex = polygon[0]
+    #         vertInCam = [wTc * v for v in vertex]
+    #         projVertInImg = [k * v for v in vertInCam]
+    #         pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in projVertInImg]]
+    #         imgpts = [tuple(np.transpose(pt.vec)[0].astype(int).tolist()) for pt in pts_2d]
+    #         for i in range(len(imgpts)):
+    #             img[idx] = cv.line(img[idx], imgpts[i], imgpts[(i+1)%len(imgpts)], color, thickness)
             
-            pass
+    #         pass
 
 
     
