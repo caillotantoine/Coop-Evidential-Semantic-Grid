@@ -61,7 +61,7 @@ def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, ma
         for agent in agent_3D:
             bboxsize = agent.get_size()
             label = agent.get_label()
-            poseT = agent.get_TPose()
+            poseT = agent.get_TPose().get()
             
             bin_mask = [np.array([0.5, 0.5, 0.0, 1.0]), np.array([0.5, -0.5, 0.0, 1.0]), np.array([-0.5, -0.5, 0.0, 1.0]), np.array([-0.5, 0.5, 0.0, 1.0])]
             

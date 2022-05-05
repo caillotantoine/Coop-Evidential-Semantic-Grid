@@ -13,7 +13,7 @@ class Bbox:
         self.TPose = None
 
     def __str__(self) -> str:
-        return f'BBox {self.label} of a size {self.size} @ {self.pose}'
+        return f'BBox {self.label} of a size {self.size} @ {self.TPose.get_translation()}'
         
     def get_pose(self):
         return self.pose

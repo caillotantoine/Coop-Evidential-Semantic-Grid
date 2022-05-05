@@ -78,7 +78,8 @@ class Agent:
                 bbox_pose = vec3(ox, oy, oz)
                 self.bbox3d = Bbox3D(bbox_pose, bboxsize, self.label)
                 self.bbox3d.set_TPose(self.Tpose)
-                 
+
+
                 #   Fix the Tpose for pedestrian (they're flying)    
                 if self.label == "pedestrian":
                     self.Tpose.tmat[2:3] = sz
@@ -146,6 +147,9 @@ class Agent:
         k_mat = prj.load_k(kmat_path, raw)
         return k_mat
 
+    def get_sensor_pose(self, id:int) -> TMat:
+        return self.sensorTPoses[id]
+
     def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat]:
         """
         get the visible bounding box from the agent's perspective.
@@ -153,11 +157,13 @@ class Agent:
         self.get_state(frame)
         if self.label == "pedestrian":
             raise Exception("Pedestrian do not have sensors.")
-        kmat_path = self.mypath + "/camera_semantic_segmentation/cameraMatrix.npy"
-        k_mat = prj.load_k(kmat_path)
+
+
+        k_mat = self.get_kmat()
         # np.load(kmat_path)
         # print(k_mat)
-        camPose = self.sensorTPoses[0]
+        camPose = self.get_sensor_pose(0)
+
         with open(self.dataset_json_path) as dataset_json:
             raw_json = json.load(dataset_json)
 
@@ -171,9 +177,11 @@ class Agent:
             bbox3pts:List[List[vec2]] = []
             for a in agents:
                 a.get_state(frame)
+                print(f'Frame {frame} - {a}')
                 projected = prj.projector_filter(a.get_bbox3d(), a.get_pose(), k_mat, camPose, img)
                 if projected is None:
                     continue
+
                 (bbox, points) = projected
                 # print(f"\t{bbox}")
                 bbox2.append(bbox)
@@ -191,6 +199,7 @@ class Agent:
             img = cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png')
 
             if drawBBOXonImg:
+                # Bounding box 2D
                 color = (0, 255, 0)
                 thickness = 2
                 for box in bbox2:
@@ -199,6 +208,8 @@ class Agent:
                     # print(pts)
                     for i in range(len(pts)):
                         img = cv.line(img, pts[i], pts[(i+1)%len(pts)], color, thickness)
+
+                # Bounding box 3D
                 color = (0, 0, 255)
                 thickness = 1
                 for points in bbox3pts:

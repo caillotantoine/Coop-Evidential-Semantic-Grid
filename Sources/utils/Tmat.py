@@ -50,6 +50,7 @@ class TMat:
 
     def inv(self):
         self.tmat = np.linalg.inv(self.tmat)
+        return self
 
     def get_translation(self):
         from utils.vector import vec4

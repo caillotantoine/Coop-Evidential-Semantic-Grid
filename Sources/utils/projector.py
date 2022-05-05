@@ -91,7 +91,7 @@ def load_k(path_k, out_raw=False) -> TMat:
     
     return kmat
 
-def project3Dpoint(point3D:vec4, kmat:TMat, Tcw:TMat) -> vec2:
+def project3Dpoint(point3D:vec4, kmat:TMat, wTcw:TMat) -> vec2:
     """Project a 3D point into the image plane
     
     Args:
@@ -106,13 +106,17 @@ def project3Dpoint(point3D:vec4, kmat:TMat, Tcw:TMat) -> vec2:
         ValueError: If the point is behind the camera
     """
     cwTc = getCwTc()
-    wTc:TMat = Tcw * cwTc
-    wTc.inv()
+    wTc:TMat = wTcw * cwTc
+    cTw:TMat = wTc.inv()
 
-    projPts = kmat * (wTc * point3D)
-    if projPts.z() <= 0:
-        raise ValueError("The point is behind the camera")
-    return ().vec3().nvec2()
+    point3D_c = cTw * point3D
+
+    if point3D_c.z() < 0:
+        raise ValueError("Point behind the camera")
+    
+    point2D = kmat * point3D_c
+
+    return point2D.vec3().nvec2()
 
 
 def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threashold:float = 0.3) -> Tuple[Bbox2D, List[vec2]]:
@@ -130,34 +134,35 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     Returns:
         Tuple[Bbox2D, List[vec2]]: The projected bounding box and the list of points that are not occluded
     """
-    out_bbox = Bbox2D(vec2(0, 0), vec2(5, 5), label=bbox.label)
+    out_bbox = Bbox2D(vec2(100, 100), vec2(50, 50), label=bbox.label)
     
-    cwTc = getCwTc()
-    wTc = sensorT * cwTc
-    wTc.inv()
+    # cwTc = getCwTc()
+    # wTc = sensorT * cwTc
+    # wTc.inv()
 
-    pts_c:List[vec4] = [pt3.vec4() for pt3 in bbox.get_pts()]
-    pts_w:List[vec4] = [vPose * pt4 for pt4 in pts_c]
-    pts_cam:List[vec4] = [wTc * pt4 for pt4 in pts_w]
-    pts_proj:List[vec4] = [k * pt4 for pt4 in pts_cam]
-    pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in pts_proj]]
+    pts_w:List[vec4] = [pt3.vec4() for pt3 in bbox.get_pts_world()]
 
+    # pts_cam:List[vec4] = [wTc * pt4 for pt4 in pts_w]
+    # pts_proj:List[vec4] = [k * pt4 for pt4 in pts_cam]
+    # pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in pts_proj]]
+
+    
     try:
-        pts_2d2:List[vec2] = [project3Dpoint(pt4, k, vPose) for pt4 in pts_w]
-        A = pts_2d2
+        pts_2d:List[vec2] = [project3Dpoint(pt4, k, sensorT) for pt4 in pts_w]
     except ValueError:
-        pass
+        return None
 
-    for i in range(len(pts_2d)):
-        if pts_proj[i].z() <= 0:
-            return None
+    # for i in range(len(pts_2d)):
+    #     if pts_proj[i].z() <= 0:
+    #         return None
 
-    out_bbox.set_from_pts(pts_2d)
+    # out_bbox.set_from_pts(pts_2d)
 
-    (h, w, c) = img.shape
+    (h, w, _) = img.shape
     center:vec2 = out_bbox.get_pose() + (out_bbox.get_size() / 2.0)
     if not (center.x() >= 0.0 and center.x() <= w and center.y() >= 0.0 and center.y() <= h):
-        return None
+        pass
+        # return None
     #     pass
     #     # return out_bbox
     # else:
@@ -180,9 +185,11 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
         ratio = N_detected / cropped_img.size
         # print(f'In {cropped_img.size} pix, deteceted {pix} with {N_detected} of {bbox.get_label()} with a ratio of {ratio*100.0}%')
     except:
-        return None
-    if ratio <= threashold:
-        return None
+        pass
+        # return None
+
+    # if ratio <= threashold:
+    #     return None
     return (out_bbox, pts_2d)
 
 def project_BBox2DOnPlane(plane:plkrPlane, 
