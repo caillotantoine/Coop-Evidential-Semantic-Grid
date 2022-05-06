@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 # depackage the data to fit the classical argument disposition.
 def get_bbox(data:Tuple[Agent, int, bool]) -> Tuple[List[Bbox2D], TMat, TMat]:
     agent, frame, drawOnImg = data
-    print(f"get_bbox frame {frame}")
+    # print(f"get_bbox frame {frame}")
     agent.get_state(frame)
     return agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=drawOnImg) # Set plot to plt to show the images with the bounding boxes drawn.
 
@@ -55,15 +55,17 @@ def get_local_maps(frame:int, agents:List[Agent], mapcenter:vec2):
     # data = [(agent, frame, True) for agent in agents]
     # from the dataset, retrieve the 2D bounding box
 
-    print(f"get_local_maps frame {frame}")
+    # print(f"get_local_maps frame {frame}")
     bboxes = [agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=True) for agent in agents]
     (bbox_list, kmat, camT, label, img) = zip(*bboxes)
 
+
     camTnp = camT[3].get_translation()
-    print(camTnp)
+    # print(camTnp)
     # bboxes = get_bbox_par(data, False)
     # create the evidential map + the mask for each agent
     mask_eveid_maps = [generate_evid_grid(agent_out=d, mapcenter=mapcenter) for d in bboxes]
+
     # datashape conversion
     # [(mask, evid_map, polygons)] -> [mask], [evid_maps]
 

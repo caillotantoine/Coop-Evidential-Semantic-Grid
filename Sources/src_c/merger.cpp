@@ -267,7 +267,6 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
                     break;
                 
                 default:
-                    #define FEROW 3
                     for(j = 0; j<3; j++)
                         out[(i*3) + j] += 0.5;
                     // out[(i*3) + 0] += 0.5;

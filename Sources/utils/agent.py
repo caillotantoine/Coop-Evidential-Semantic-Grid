@@ -83,7 +83,7 @@ class Agent:
 
                 #   Fix the Tpose for pedestrian (they're flying)    
                 if self.label == "pedestrian":
-                    self.Tpose.tmat[2:3] = sz
+                    self.Tpose.tmat[2,3] = sz
         return self
 
         # DEBUG
@@ -207,18 +207,8 @@ class Agent:
             raise Exception("Pedestrian do not have sensors.")
         k_mat = self.get_kmat()
 
-
-        # ================================================================ BUG GFYYITDFDUYGUFRTYFHJBKJGH75664ERD
-        # cam_pose does not seem to be updated 
-
-        print(f'get_visible_bbox frame {frame}')
         self.get_state(frame)
         camPose = self.get_sensor_pose(0)
-        print(camPose.get_translation())
-
-
-        # ================================================================ END BUG GFYYITDFDUYGUFRTYFHJBKJGH75664ERD
-
 
         with open(self.dataset_json_path) as dataset_json:
             raw_json = json.load(dataset_json)

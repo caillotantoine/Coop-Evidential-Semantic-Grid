@@ -63,6 +63,17 @@ def save_map(dir:str, filename:str, map_in:np.ndarray, save:bool = True):
         return
     if not path.isdir(dir):
         makedirs(dir)    
+    map_max = np.max(map_in)
+
+
+    if (map_max > 2) and (map_in.dtype == float):
+        raise ValueError(f'Map max is {map_max} (dtype : {map_in.dtype})')
+
+    if (map_max > 1.0) and (map_in.dtype == np.float32):
+        # raise ValueError(f'CEST NON {map_max} (dtype : {map_in.dtype})')
+        map_in = map_in / map_max
+        print(f"Warning: map is normalized to [0, 1] (max was {map_max})")
+
     plt.imsave(f'{dir}/{filename}', map_in)
 
 def create_diffmap(mapGND:np.ndarray, mapin:np.ndarray) -> np.ndarray:

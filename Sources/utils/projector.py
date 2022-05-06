@@ -145,7 +145,14 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     # pts_cam:List[vec4] = [wTc * pt4 for pt4 in pts_w]
     # pts_proj:List[vec4] = [k * pt4 for pt4 in pts_cam]
     # pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in pts_proj]]
-
+    
+    # if bbox.label == 'pedestrian':
+    #     print("==================== PEDESTRIAN =====================")
+    #     print(bbox)
+    #     print(bbox.get_TPose())
+    #     points = bbox.get_pts_world()
+    #     for pt in points:
+    #         print(pt)
     
     try:
         pts_2d:List[vec2] = [project3Dpoint(pt4, k, sensorT) for pt4 in pts_w]

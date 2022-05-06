@@ -33,7 +33,7 @@ argparser.add_argument(
     '--start',
     metavar='S',
     type=int,
-    default=130, #10
+    default=10, #10
     help='Starting point in the dataset (default 10).')
 argparser.add_argument(
     '--pdilate',
@@ -54,11 +54,11 @@ argparser.add_argument(
     '--end',
     metavar='E',
     type=int,
-    default=160,
+    default=500,
     help='Ending point in the dataset (default 500).')
 argparser.add_argument(
     '--dataset_path',
-    default='/home/caillot/Documents/Datasets/CARLA_Dataset_original',
+    default='/home/caillot/Documents/Datasets/CARLA_Dataset_B',
     help='Path of the dataset.')
 argparser.add_argument(
     '--save_path',

@@ -9,15 +9,25 @@ import cwrap.rasterizer as rasterizer
 import cv2 as cv
 import json
 
-def readFE() -> List[List[float]]:
+def readFE(is_Infra=False) -> List[List[float]]:
     try:
         with open(args.json_path) as json_file:
             data = json.load(json_file)
-            FE = data['FE_mat']
             json_file.close()
-            return FE
     except:
         raise("Error: No json file found")
+
+    if not is_Infra:
+        FE = data['FE_mat']
+        return FE
+        
+    try:
+        FE = data['FE_mat_infra']
+        return FE
+    except:
+        print("No FE_mat_infra in the json file")
+        FE = data['FE_mat']
+        return FE
 
 # Generate the local evidential map from one agent
 def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, mapcenter:vec2 = vec2(x=0.0, y=0.0), agent_3D:List[Bbox3D] = None, antoine=False):
@@ -83,7 +93,7 @@ def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, ma
     # define the number of focal elements
     nFE = 8
     # grab the focal elements from a json file
-    FE = readFE()
+    FE = readFE(is_Infra=False)
 
     # example of focal elements
     # #      Ø    V    P    VP   T    VT   PT   VPT
