@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri May  6 10:33:36 2022
+# Make data base, printed on Tue May 10 10:37:20 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ SNAP_INSTANCE_KEY =
 # environment
 GJS_DEBUG_OUTPUT = stderr
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-1024d6fb-c7d4-4504-9964-f1071978e3e1.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-d549ef9a-5ae7-4062-a43d-0e752cf208a1.sock
 # environment
 LC_NAME = fr_FR.UTF-8
 # environment
@@ -105,7 +105,7 @@ SNAP_REEXEC =
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 6153
+VSCODE_PID = 5367
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -113,7 +113,7 @@ XDG_SESSION_TYPE = x11
 # environment
 BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
-SESSION_MANAGER = local/caillot-Precision-5540:@/tmp/.ICE-unix/3012,unix/caillot-Precision-5540:/tmp/.ICE-unix/3012
+SESSION_MANAGER = local/caillot-Precision-5540:@/tmp/.ICE-unix/2502,unix/caillot-Precision-5540:/tmp/.ICE-unix/2502
 # automatic
 *F = $(notdir $*)
 # environment
@@ -159,7 +159,7 @@ LC_TIME = fr_FR.UTF-8
 # environment
 SNAP = /snap/code/95
 # environment
-INVOCATION_ID = d13cc7a56be147e2a09b7d2d40a08b64
+INVOCATION_ID = 300ff6e8eac847f1a3d88db82c3fde1a
 # environment
 SNAP_REVISION = 95
 # environment
@@ -195,7 +195,7 @@ SNAP_ARCH = amd64
 # makefile
 .DEFAULT_GOAL := 
 # environment
-SYSTEMD_EXEC_PID = 3050
+SYSTEMD_EXEC_PID = 2541
 # environment
 DISPLAY = :1
 # environment
@@ -211,11 +211,11 @@ SNAP_DATA = /var/snap/code/95
 # environment
 SNAP_CONTEXT = hP0JdrdF_EyscL5K1x2b0M4Q16avQxbgxyWustGztqBSHLMSV6Pr
 # environment
-MANAGERPID = 2392
+MANAGERPID = 1942
 # environment
 LC_MEASUREMENT = fr_FR.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 6116
+GIO_LAUNCHED_DESKTOP_FILE_PID = 5114
 # environment
 _ = /snap/code/95/usr/share/code/code
 # environment
@@ -227,7 +227,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # environment
 GDK_PIXBUF_MODULE_FILE = /home/caillot/snap/code/common/.cache/gdk-pixbuf-loaders.cache
 # environment
-JOURNAL_STREAM = 8:40861
+JOURNAL_STREAM = 8:31378
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -281,6 +281,7 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # . (device 66306, inode 48893025): 9 files, no impossibilities.
 
+ 
 # 9 files, no impossibilities in 1 directories.
 
 # Implicit Rules
@@ -306,7 +307,6 @@ Makefile:
 all:
 #  Command line target.
 #  Implicit rule search has been done.
- 
 #  File does not exist.
 #  File has not been updated.
 
@@ -338,6 +338,6 @@ GNUmakefile:
 # strcache performance: lookups = 20 / hit rate = 15%
 # hash-table stats:
 # Load=17/8192=0%, Rehash=0, Collisions=0/20=0%
-# Finished Make data base on Fri May  6 10:33:36 2022
+# Finished Make data base on Tue May 10 10:37:20 2022
 
  

@@ -33,7 +33,7 @@ argparser.add_argument(
     '--start',
     metavar='S',
     type=int,
-    default=10, #10
+    default=50, #10
     help='Starting point in the dataset (default 10).')
 argparser.add_argument(
     '--pdilate',
@@ -43,7 +43,7 @@ argparser.add_argument(
 argparser.add_argument(
     '--cooplvl',
     type=int,
-    default=2, #10
+    default=0, #10
     help='Number of observation to be a valid measure. -1: All, Choose a value between 0 and N users. (default 2)')
 argparser.add_argument(
     '--gdilate',
@@ -54,11 +54,11 @@ argparser.add_argument(
     '--end',
     metavar='E',
     type=int,
-    default=500,
+    default=150,
     help='Ending point in the dataset (default 500).')
 argparser.add_argument(
     '--dataset_path',
-    default='/home/caillot/Documents/Datasets/CARLA_Dataset_B',
+    default='/home/caillot/Documents/Datasets/CARLA_Dataset_intersec_dense',
     help='Path of the dataset.')
 argparser.add_argument(
     '--save_path',

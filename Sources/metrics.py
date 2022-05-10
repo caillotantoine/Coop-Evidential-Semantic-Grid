@@ -41,9 +41,19 @@ def record(sem_gnd:np.ndarray, sem_test:np.ndarray, zones:np.ndarray, coop_lvl:i
         for key_tfpn in TFPN_LUT:
             outs[f'{keylab}_{key_tfpn}'] = TFPN(sem_gnd, sem_test, zones, coop_lvl, gridsize, TFPN_LUT[key_tfpn], LABEL_LUT[keylab])
         
+
+        outs[f'{keylab}_CR'] = CR(outs[f'{keylab}_TP'], outs[f'{keylab}_TN'], outs[f'{keylab}_FP'], outs[f'{keylab}_FN'])
+
+        # if keylab == 'Pedestrian':
+        #     if outs['Pedestrian_FP'] == 0 and outs['Pedestrian_FN'] == 0 and outs['Pedestrian_TP'] == 0:
+        #         print(f'Warning: no pedestrian in frame {frame}')
+        #         continue
+        if outs[f'{keylab}_FP'] == 0 and outs[f'{keylab}_FN'] == 0 and outs[f'{keylab}_TP'] == 0:
+            # print(f'Warning: no {keylab} in frame {frame}')
+            continue
+
         outs[f'{keylab}_IoU'] = IoU(outs[f'{keylab}_TP'], outs[f'{keylab}_FP'], outs[f'{keylab}_FN'])
         outs[f'{keylab}_F1'] = F1(outs[f'{keylab}_TP'], outs[f'{keylab}_FP'], outs[f'{keylab}_FN'])
-        outs[f'{keylab}_CR'] = CR(outs[f'{keylab}_TP'], outs[f'{keylab}_TN'], outs[f'{keylab}_FP'], outs[f'{keylab}_FN'])
         mIoU += outs[f'{keylab}_IoU']
         mF1 += outs[f'{keylab}_F1']
     outs[f'mIoU'] = mIoU / len(LABEL_LUT)

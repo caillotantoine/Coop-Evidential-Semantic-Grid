@@ -42,41 +42,41 @@ extern "C" {
 // TODO : Doesn't work. Seem to only process the first agent, thus, no merging done. 
 //   NOTE : I certainly messed up with memory management in somewhere.
 
-void conjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
-{
-    const long i = 0;
-    int j = 0;
-    if(i < (gridsize * gridsize))
-    {
-        for(j = 0; j < n_agents; j++)
-        {
-            conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, false);
-        }
-    }
-}
+// void conjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+// {
+//     const long i = 0;
+//     int j = 0;
+//     if(i < (gridsize * gridsize))
+//     {
+//         for(j = 0; j < n_agents; j++)
+//         {
+//             conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, false);
+//         }
+//     }
+// }
 
-void dempster_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
-{
-    const long i = 0;
-    int j = 0;
-    if(i < (gridsize * gridsize))
-    {
-        for(j = 0; j < n_agents; j++)
-            conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, true);
-    }
-}
+// void dempster_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+// {
+//     const long i = 0;
+//     int j = 0;
+//     if(i < (gridsize * gridsize))
+//     {
+//         for(j = 0; j < n_agents; j++)
+//             conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, true);
+//     }
+// }
 
-void disjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
-{
-    int i = 0;
-    int j = 0;
+// void disjunctive_kernel(float *evid_maps_in, float *inout, const int gridsize, const int nFE, const int n_agents)
+// {
+//     int i = 0;
+//     int j = 0;
 
-    if(i < (gridsize * gridsize))
-    {
-        for(j = 0; j < n_agents; j++)
-            disjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE);
-    }
-}
+//     if(i < (gridsize * gridsize))
+//     {
+//         for(j = 0; j < n_agents; j++)
+//             disjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE);
+//     }
+// }
 
 
 ///////////////////////////
@@ -215,22 +215,10 @@ float get_normFactor(float *FE, const int nFE, int row)
 
 void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *out, float *FE, const int nFE)
 {
-    int l = 0, i = 0, c = 0, j = 0;
-    int idx = 0;
+    int l = 0, i = 0, j = 0;
     float normFactor = 0.0;
 
-    // for(i = 0; i<5; i++)
-    // {
-    //     for(j = 0; j<nFE; j++)
-    //     {
-    //         printf("%2.3f \t", FE[i*nFE + j]);
-    //     }
-    //     printf("\n");
-    //     for(j = 0; j<3; j++)
-    //         printf("%d - %2.3f \t", 1<<j, FE[i * nFE + (1<<j)]);
-    //     printf("\n\n");
-    // }
-
+    unsigned char FEROW = 1;
     for(i=0; i<gridsize*gridsize; i++)
     {
         for(l=0; l<n_agents; l++)
@@ -238,32 +226,23 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
             switch(masks[i*n_agents + l])
             {
                 case VEHICLE_MASK:
-                    #define FEROW 1
+                    FEROW = 1;
                     for(j = 0; j<3; j++)
                         out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
-                    // out[(i*3) + 0] += 1.0;
-                    // out[(i*3) + 1] += 0.0;
-                    // out[(i*3) + 2] += 0.0;
                     break;
 
                 case PEDESTRIAN_MASK:
-                    #define FEROW 2
+                    FEROW = 2;
                     normFactor = get_normFactor(FE, nFE, FEROW);
                     for(j = 0; j<3; j++)
                         out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
-                    // out[(i*3) + 0] += 0.0;
-                    // out[(i*3) + 1] += 1.0;
-                    // out[(i*3) + 2] += 0.0;
                     break;
 
                 case TERRAIN_MASK:
-                    #define FEROW 3
+                    FEROW = 3;
                     normFactor = get_normFactor(FE, nFE, FEROW);
                     for(j = 0; j<3; j++)
                         out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
-                    // out[(i*3) + 0] += 0.0;
-                    // out[(i*3) + 1] += 0.0;
-                    // out[(i*3) + 2] += 1.0;
                     break;
                 
                 default:
@@ -284,7 +263,7 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
 
 void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method)
 {
-    int l = 0, i = 0, j =0;
+    int i = 0, j =0;
     for(i=0; i<gridsize*gridsize; i++)
     {
         for(j = 0; j<n_agents; j++)
