@@ -252,6 +252,12 @@ class Agent:
                 color = (0, 255, 0)
                 thickness = 2
                 for box in bbox2:
+                    if box.label == 'vehicle':
+                        color = (0, 255, 0)
+                    elif box.label == 'pedestrian':
+                        color = (255, 128, 0)
+                    else:
+                        color = (255, 0, 0)
                     points = box.get_pts()
                     pts = [tuple(np.transpose(pt.get())[0].astype(int).tolist()) for pt in points]
                     # print(pts)

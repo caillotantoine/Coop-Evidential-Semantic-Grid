@@ -37,5 +37,12 @@
             "pix_err": 0, 
             "drop": 0.0
         }
+    }, 
+    "bbox":
+    {
+        "pose": 0.0,
+        "size": 0.0,
+        "class": 0.0,
+        "drop": 0.0
     }
 }

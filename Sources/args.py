@@ -67,5 +67,5 @@ argparser.add_argument(
 
 argparser.add_argument(
     '--json_path',
-    default='./Sources/configs/config_perfect_full_testBBA15.json',
+    default='./Sources/configs/config_perfect_full_testBBA16.json',
     help='Configuration json file path.')

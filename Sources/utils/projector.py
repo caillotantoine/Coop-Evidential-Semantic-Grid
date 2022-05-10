@@ -136,34 +136,49 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     """
     out_bbox = Bbox2D(vec2(100, 100), vec2(50, 50), label=bbox.label)
     
-    # cwTc = getCwTc()
-    # wTc = sensorT * cwTc
-    # wTc.inv()
 
     pts_w:List[vec4] = [pt3.vec4() for pt3 in bbox.get_pts_world()]
 
-    # pts_cam:List[vec4] = [wTc * pt4 for pt4 in pts_w]
-    # pts_proj:List[vec4] = [k * pt4 for pt4 in pts_cam]
-    # pts_2d:List[vec2] = [pt3.nvec2() for pt3 in [pt4.vec3() for pt4 in pts_proj]]
-    
-    # if bbox.label == 'pedestrian':
-    #     print("==================== PEDESTRIAN =====================")
-    #     print(bbox)
-    #     print(bbox.get_TPose())
-    #     points = bbox.get_pts_world()
-    #     for pt in points:
-    #         print(pt)
     
     try:
         pts_2d:List[vec2] = [project3Dpoint(pt4, k, sensorT) for pt4 in pts_w]
     except ValueError:
         return None
 
-    # for i in range(len(pts_2d)):
-    #     if pts_proj[i].z() <= 0:
-    #         return None
 
     out_bbox.set_from_pts(pts_2d)
+
+    # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
+
+    pose_noise = 0.0
+    size_noise = 0.0
+    class_noise = 0.3
+    drop_probability = 0.3
+
+    # random.uniform = [0, 1.0) Uniform distribution
+    # 1 - [0, 1.0) = [1.0, 0.0)
+    # [1.0, 0.0) < 10% -> 10% drop 90% pass
+    if 1-np.random.uniform() < drop_probability:
+        return None
+
+    if 1-np.random.uniform() < class_noise:
+        if out_bbox.label == "vehicle":
+            out_bbox.label = "pedestrian"
+        elif out_bbox.label == "pedestrian":
+            out_bbox.label = "vehicle"
+        else:
+            pass
+    
+    # pose:vec2 = out_bbox.get_pose()
+    # pose.x += np.random.normal(pose.x, pose_noise)
+    # pose.y += np.random.normal(pose.y, pose_noise)
+
+    # size = out_bbox.get_size()
+    # size.x += np.random.normal(size.x, size_noise)
+    # size.y += np.random.normal(size.y, size_noise)
+
+
+    # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
 
     (h, w, _) = img.shape
     center:vec2 = out_bbox.get_pose() + (out_bbox.get_size() / 2.0)
