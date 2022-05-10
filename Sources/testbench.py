@@ -102,6 +102,15 @@ def pipeline(state:GUI_State):
     active_agents = get_active_agents(every_agents) # Get the active agents
     mapcenter = get_mapcenter(every_agents) # Get the map center
 
+    with open(args.json_path) as json_file:
+        data = json.load(json_file)
+
+    bbox_pose = data['bbox']['pose']
+    bbox_size = data['bbox']['size']
+    bbox_class = data['bbox']['class']
+    bbox_drop = data['bbox']['drop']
+    bbox_noise = (bbox_pose, bbox_size, bbox_class, bbox_drop)
+
     for frame in tqdm(range(args.start, args.end)): # for each frame
         # print(f"pipeline frame {frame}")
         while state.is_pause():
@@ -114,7 +123,7 @@ def pipeline(state:GUI_State):
             return
 
         (mask_GND, _, _) = get_gnd_mask(frame, agents2gndtruth, mapcenter=mapcenter) # Get the ground truth mask
-        (mask, evid_maps, images) = get_local_maps(frame=frame, agents=active_agents, mapcenter=mapcenter) # Get the local maps
+        (mask, evid_maps, images) = get_local_maps(frame=frame, agents=active_agents, mapcenter=mapcenter, bbox_noise=bbox_noise) # Get the local maps
         #================== Start debug VY76R5FGY876T574EFU6
         #   Role of debug : print 3D bounding boxes + projected footprints in an image. 
         #                   The image will then be transfered to 

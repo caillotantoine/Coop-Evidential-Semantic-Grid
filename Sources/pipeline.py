@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 
 # for parallel processing. 
 # depackage the data to fit the classical argument disposition.
-def get_bbox(data:Tuple[Agent, int, bool]) -> Tuple[List[Bbox2D], TMat, TMat]:
-    agent, frame, drawOnImg = data
+def get_bbox(data:Tuple[Agent, int, bool, Tuple[float, float, float, float]]) -> Tuple[List[Bbox2D], TMat, TMat]:
+    agent, frame, drawOnImg, bbox_noise = data
     # print(f"get_bbox frame {frame}")
     agent.get_state(frame)
-    return agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=drawOnImg) # Set plot to plt to show the images with the bounding boxes drawn.
+    return agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=drawOnImg, bbox_noise=bbox_noise) # Set plot to plt to show the images with the bounding boxes drawn.
 
 def get_pred(data:Tuple[Agent, int]) -> List[Bbox3D]:
     agent, frame = data
@@ -30,7 +30,7 @@ def get_pred(data:Tuple[Agent, int]) -> List[Bbox3D]:
 ####
 ####    Processing for each agents
 ####
-def get_bbox_par(data:Tuple[Agent, int, bool], parallel = False) -> List[Tuple[List[Bbox2D], TMat, TMat]]:
+def get_bbox_par(data:Tuple[Agent, int, bool, Tuple[float, float, float, float]], parallel = False) -> List[Tuple[List[Bbox2D], TMat, TMat]]:
     if parallel:
         return pool.map(get_bbox, data)
     else:
@@ -50,13 +50,13 @@ def read_dataset() -> Tuple[List[Agent], List[Agent]]:
         agents2gndtruth = [Agent(dataset_path=dataset_path, id=idx) for idx, agent in enumerate(agent_l) if agent['type'] != "infrastructure"]
     return (agents, agents2gndtruth)
 
-def get_local_maps(frame:int, agents:List[Agent], mapcenter:vec2):
+def get_local_maps(frame:int, agents:List[Agent], mapcenter:vec2, bbox_noise=(0.0, 0.0, 0.0, 0.0)):
     # Every agent + given frame ID
     # data = [(agent, frame, True) for agent in agents]
     # from the dataset, retrieve the 2D bounding box
-
+    
     # print(f"get_local_maps frame {frame}")
-    bboxes = [agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=True) for agent in agents]
+    bboxes = [agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=True, bbox_noise=bbox_noise) for agent in agents]
     (bbox_list, kmat, camT, label, img) = zip(*bboxes)
 
 

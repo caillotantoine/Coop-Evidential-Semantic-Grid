@@ -175,38 +175,6 @@ def projector_filter(bbox:Bbox3D, vPose:TMat, k:TMat, sensorT:TMat, img, threash
     if ratio <= threashold:
         return None
 
-    # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
-
-    pose_noise = 0.10
-    size_noise = 0.10
-    class_noise = 0.3
-    drop_probability = 0.3
-
-    # random.uniform = [0, 1.0) Uniform distribution
-    # 1 - [0, 1.0) = [1.0, 0.0)
-    # [1.0, 0.0) < 10% -> 10% drop 90% pass
-    if 1-np.random.uniform() < drop_probability:
-        return None
-
-    if 1-np.random.uniform() < class_noise:
-        if out_bbox.label == "vehicle":
-            out_bbox.label = "pedestrian"
-        elif out_bbox.label == "pedestrian":
-            out_bbox.label = "vehicle"
-        else:
-            pass
-    
-    size:vec2 = out_bbox.get_size()
-    out_bbox.set_size(vec2(x=np.random.normal(size.x(), size.x()*size_noise), y=np.random.normal(size.y(), size.y()*size_noise)))
-
-    pose:vec2 = out_bbox.get_pose()
-    out_bbox.set_pose(vec2(x=np.random.normal(pose.x(), size.x()*pose_noise), y=np.random.normal(pose.y(), size.y()*pose_noise)))
-
-    
-
-
-    # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
-
     return (out_bbox, pts_2d)
 
 def project_BBox2DOnPlane(plane:plkrPlane, 

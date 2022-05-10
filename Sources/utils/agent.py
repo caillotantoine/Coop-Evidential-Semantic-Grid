@@ -199,7 +199,7 @@ class Agent:
         return cv.cvtColor(cv.imread(self.mypath+f'camera_rgb/{frame:06d}.png'), cv.COLOR_BGR2RGB)
 
 
-    def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False) -> Tuple[List[Bbox2D], TMat, TMat, str, np.ndarray]:
+    def get_visible_bbox(self, frame:int, plot:plt = None, drawBBOXonImg=False, bbox_noise=(0.0, 0.0, 0.0, 0.0)) -> Tuple[List[Bbox2D], TMat, TMat, str, np.ndarray]:
         """
         get the visible bounding box from the agent's perspective.
         """
@@ -231,9 +231,38 @@ class Agent:
                     continue
 
                 (bbox, points) = projected
-                # print(f"\t{bbox}")
-                bbox2.append(bbox)
                 bbox3pts.append(points)
+                # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
+
+                (pose_noise, size_noise, class_noise, drop_probability) = bbox_noise
+                # pose_noise = 0.10
+                # size_noise = 0.10
+                # class_noise = 0.3
+                # drop_probability = 0.3
+
+                # random.uniform = [0, 1.0) Uniform distribution
+                # 1 - [0, 1.0) = [1.0, 0.0)
+                # [1.0, 0.0) < 10% -> 10% drop 90% pass
+                if 1-np.random.uniform() < drop_probability:
+                    continue
+
+                if 1-np.random.uniform() < class_noise:
+                    if bbox.label == "vehicle":
+                        bbox.label = "pedestrian"
+                    elif bbox.label == "pedestrian":
+                        bbox.label = "vehicle"
+                    else:
+                        pass
+                
+                size:vec2 = bbox.get_size()
+                bbox.set_size(vec2(x=np.random.normal(size.x(), size.x()*size_noise), y=np.random.normal(size.y(), size.y()*size_noise)))
+
+                pose:vec2 = bbox.get_pose()
+                bbox.set_pose(vec2(x=np.random.normal(pose.x(), size.x()*pose_noise), y=np.random.normal(pose.y(), size.y()*pose_noise)))
+
+                # ======================= ADD NOISE : hjdfhjbjhbvfbjhbqsdf
+                bbox2.append(bbox)
+                
 
             # (w,h) = np.shape(img)
             h, w,_ = img.shape
