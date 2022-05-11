@@ -76,7 +76,7 @@ def save_map(dir:str, filename:str, map_in:np.ndarray, save:bool = True):
     map_max = np.max(map_in)
 
 
-    if (map_max > 2) and (map_in.dtype == float):
+    if (map_max > 2) and (map_in.dtype == np.float32):
         raise ValueError(f'Map max is {map_max} (dtype : {map_in.dtype})')
 
     if (map_max > 1.0) and (map_in.dtype == np.float32):

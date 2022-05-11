@@ -31,7 +31,7 @@ all: $(targets:.cpp=.so) $(targets:.cpp=.out)
 	$(CXX) -o $@ -std=c++11 -g -fdiagnostics-color=always -Wall $? `pkg-config --cflags --libs opencv4`
 
 %.so: %.cpp
-	$(CXX) -o $@ -g -std=c++11 -fPIC -shared -fdiagnostics-color=always -Wall $? `pkg-config --cflags --libs opencv4`
+	$(CXX) -o $@ -O3 -std=c++11 -fPIC -shared -fdiagnostics-color=always -Wall $? `pkg-config --cflags --libs opencv4`
 	nm -gD $@ | grep ' T ' | grep -v '_Z' | cut -d' ' -f3
 
 clean:

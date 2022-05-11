@@ -1,3 +1,4 @@
+from platform import python_branch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from cwrap.merger import mean_merger_fast, DST_merger
@@ -11,8 +12,16 @@ from agents2maps import readFE
 from threading import Thread, Lock
 from copy import deepcopy
 import time
+import scipy.ndimage as ndimage
 
 import matplotlib.pyplot as plt
+
+
+# for dubug only 
+import pandas as pd
+import os
+from pathlib import Path  
+OUT_DETAILS = False
 
 class GUI_State:
     mutex: Lock
@@ -111,6 +120,8 @@ def pipeline(state:GUI_State):
     bbox_drop = data['bbox']['drop']
     bbox_noise = (bbox_pose, bbox_size, bbox_class, bbox_drop)
 
+    loopback_evid = None
+
     for frame in tqdm(range(args.start, args.end)): # for each frame
         # print(f"pipeline frame {frame}")
         while state.is_pause():
@@ -134,7 +145,7 @@ def pipeline(state:GUI_State):
         observed_mask = get_nObserved_mask(frame, mask) # Get the observed mask
 
         for i, m in enumerate(mask):
-            save_map(f'{SAVE_PATH}/{i}/', f'{frame:06d}.png', m)
+            save_map(f'{SAVE_PATH}/RAW_PoV/Agent{i}/', f'{frame:06d}.png', m)
 
         if CPT_MEAN: # If we want to compute the mean method
             save_map(f'{SAVE_PATH}/GND/', f'{frame:06d}.png', mask_GND, args.save_img) # Save the ground truth map (so we just need to save it once)
@@ -159,14 +170,70 @@ def pipeline(state:GUI_State):
                 evid_out = DST_merger(evid_maps=[loopback_evid, evid_buffer], gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
             else:
                 evid_out = evid_buffer
-            loopback_evid = evid_buffer
+            # ======================================================= ADD NOISE  jhcvhjebqchbjhqsdcbjhbvcqazxc
+
+            # mass_check = np.sum(evid_buffer, axis=2)
+            # save_map(f'{SAVE_PATH}/{ALGO}/RAW/sum_evid/', f'{frame:06d}.png', mass_check, args.save_img)
+
+            evid_blured = np.zeros(evid_buffer.shape, dtype=np.float32)
+            for i in range(evid_buffer.shape[2]):
+                evid_blured[:,:,i] = ndimage.gaussian_filter(evid_buffer[:,:,i], sigma=5.0)
+
+            save_map(f'{SAVE_PATH}/{ALGO}/RAW/V-P-T_blur/', f'{frame:06d}.png', evid_blured[:,:,[1, 2, 4]], args.save_img)
+            evid_normalizer = np.sum(evid_blured, axis=2)
+
+            for i in range(evid_blured.shape[2]):
+                evid_blured[:,:,i] = evid_blured[:,:,i] / evid_normalizer
+
+            # evid_normalizer2 = np.sum(evid_blured, axis=2)
+
+            loopback_evid = evid_blured
+
+            # ======================================================= ADD NOISE  jhcvhjebqchbjhqsdcbjhbvcqazxc
         else:
+# ====================================================================== BUG: merging results mass sum != 0 jnhqd4fd4v55grd4sv4qbvsrwdf
             # Merge the evidential map for a given algorithm
             evid_out = DST_merger(evid_maps=evid_maps, gridsize=GRIDSIZE, CUDA=False, method=ALGOID)
+            # mass_check = np.sum(evid_out, axis=2)
+            # save_map(f'{SAVE_PATH}/{ALGO}/RAW/debug/{frame}/', f'{frame:06d}.png', mass_check, args.save_img)
+
+        if OUT_DETAILS:
+            DST_LUT = ['Ø', "V", "P", "VP", "T", "VT", "PT", "VTP"]
+            for i in range(evid_out.shape[0]):
+                for j in range(evid_out.shape[1]):
+                    if evid_out[i,j, 0] > 0:
+                        out_info = {'frame': frame, 'x': i, 'y': j, 'mass_sum': evid_out[i,j]}
+                        for k in range(evid_out.shape[2]):
+                            out_info[f'evid_{DST_LUT[k]}'] = evid_out[i,j,k]
+                        df = pd.DataFrame(out_info)
+                        filepath = Path(f'{SAVE_PATH}/{ALGO}/RAW/debug/{frame}/info.csv')  
+                        filepath.parent.mkdir(parents=True, exist_ok=True)  
+                        df.to_csv(filepath, mode='a', index=False, header=not os.path.exists(filepath))
+
+                        out_dst = {}
+                        for name in DST_LUT:
+                            out_dst[name] = []
+                        
+                        for emap in evid_maps:
+                            for k in range(emap.shape[2]):
+                                out_dst[DST_LUT[k]].append(emap[i,j,k])
+                        df = pd.DataFrame(out_dst)
+                        filepath = Path(f'{SAVE_PATH}/{ALGO}/RAW/debug/{frame}/dst/{i}-{j}.csv')  
+                        filepath.parent.mkdir(parents=True, exist_ok=True)  
+                        df.to_csv(filepath, index=False)
+
+
+            # for i in range(evid_out.shape[2]):
+            #     evid_out[:,:,i] = np.divide(evid_out[:,:,i], mass_check)
+            # mass_check = np.sum(evid_out, axis=2)
+            # save_map(f'{SAVE_PATH}/{ALGO}/RAW/sum_evid_norm/', f'{frame:06d}.png', mass_check, args.save_img)
+
+# ====================================================================== BUG: merging results mass sum != 0 jnhqd4fd4v55grd4sv4qbvsrwdf
         # Save the maps      
         save_map(f'{SAVE_PATH}/{ALGO}/RAW/V-P-T/', f'{frame:06d}.png', evid_out[:,:,[1, 2, 4]], args.save_img)
         save_map(f'{SAVE_PATH}/{ALGO}/RAW/VP-VT-PT/', f'{frame:06d}.png', evid_out[:,:,[3, 5, 6]], args.save_img)
         save_map(f'{SAVE_PATH}/{ALGO}/RAW/VPT/', f'{frame:06d}.png', evid_out[:,:,7], args.save_img)
+        save_map(f'{SAVE_PATH}/{ALGO}/RAW/O/', f'{frame:06d}.png', evid_out[:,:,0], args.save_img)
 
         # Test every decision taking algorithm except average max
         for decision_maker in DECIS_LUT:
