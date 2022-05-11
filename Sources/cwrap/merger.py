@@ -45,14 +45,15 @@ def DST_merger_w( evid_maps_in:np.ctypeslib.ndpointer(dtype=np.float32),  inout:
 
 def DST_merger(evid_maps:List[np.ndarray], gridsize, CUDA:bool = False, method:int = 0) -> np.ndarray:
     # evid_maps_l = evid_maps
-    inout = deepcopy(evid_maps.pop(0))
-    if len(evid_maps) == 0:
+    emaps = deepcopy(evid_maps)
+    inout = deepcopy(emaps.pop(0))
+    if len(emaps) == 0:
         return inout
-    evid_maps_arr = np.stack(evid_maps, axis = 2) # [gridsize][gridsize][n_agents][n_elements]
+    evid_maps_arr = np.stack(emaps, axis = 2) # [gridsize][gridsize][n_agents][n_elements]
     # evid_maps_arr = evid_maps_arr
     nFE = evid_maps_arr.shape[3]
     # inout = np.zeros(shape=(gridsize, gridsize, nFE), dtype=np.float32)
-    DST_merger_w(evid_maps_in=evid_maps_arr, inout=inout, gridsize=gridsize, nFE=nFE, n_agents=len(evid_maps), method=c_char(method))
+    DST_merger_w(evid_maps_in=evid_maps_arr, inout=inout, gridsize=gridsize, nFE=nFE, n_agents=len(emaps), method=c_char(method))
     
     return inout
     
