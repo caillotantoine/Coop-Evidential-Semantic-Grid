@@ -114,9 +114,14 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
     float buf[N_CLASSES] = {0};
     float res = 0;
     float K = 0.0;
+    int start = 0;
     if(dempster)
+    {
         K = Konflict(inout_cell, cell, n_elem);
-    for (A = 0; A<n_elem; A++) // A starts from 1 since there must be A != Ø
+        start = 1;
+    }
+        
+    for (A = start; A<n_elem; A++) // A starts from 1 since there must be A != Ø
                                // A start from 0, dans le cas de dempster, ce sera normalisé, sinon, c'est un indicateur d'erreur! 
     {
         for(B=0; B<n_elem; B++)
@@ -210,39 +215,27 @@ int main(int argc, char **argv)
 
     float A[8] = {0.0, 0, 0, 0, 0, 0, 0, 1.0};
     float B[8] = {0, 0.94, 0, 0.02, 0, 0.02, 0.02, 0};
+    float C[8] = {0.0,0.0,0.0,0.0,0.75,0.125,0.125,0.0};
 
 
     // float A[4][8] = {U, U, U, U};
     // float B[4][8] = {T, T, T, T};
 
     float out[8] = {0};
-    memcpy(out, A, 8*sizeof(float));
+    memcpy(out, C, 8*sizeof(float));
 
     printsum(out, 8);
 
-    conjunctive(out, B, 8, false);
+    conjunctive(out, A, 8, true);
     printsum(out, 8);
 
-    conjunctive(out, B, 8, false);
+    conjunctive(out, B, 8, true);
     printsum(out, 8);
 
-    // normalize_cell(out, 8);
-    // printsum(out, 8);
-
-    conjunctive(out, B, 8, false);
+    conjunctive(out, C, 8, true);
     printsum(out, 8);
 
-    conjunctive(out, B, 8, false);
-    printsum(out, 8);
 
-    conjunctive(out, B, 8, false);
-    printsum(out, 8);
-
-    conjunctive(out, B, 8, false);
-    printsum(out, 8);
-
-    conjunctive(out, B, 8, false);
-    printsum(out, 8);
 
     // true -> Sum: 0.8681
     // false -> Sum: 0.8681
