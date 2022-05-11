@@ -125,7 +125,7 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
             {
                 if((B&C) == A)
                 {
-                    res = (float) *(inout_cell + B) * (float) *(cell + C);
+                    res = inout_cell[B] * cell[C];
                     // printf("A %f, %f, %f\n",*(inout_cell + B), *(cell + C), res);
                     buf[A] += res;
                 }
@@ -152,7 +152,7 @@ void disjunctive(float *inout_cell, float *cell, int n_elem)
             {
                 if((B|C) == A)
                 {
-                    res = (float) *(inout_cell + B) * (float) *(cell + C);
+                    res = inout_cell[B] * cell[C];
                     // printf("A %f, %f, %f\n",*(inout_cell + B), *(cell + C), res);
                     buf[A] += res;
                 }
