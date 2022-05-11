@@ -79,6 +79,29 @@ extern "C" {
 // }
 
 
+float printsum(float *e, float n)
+{
+    int i = 0;
+    float sum = 0;
+    for(i=0; i<n; i++)
+    {
+        sum += e[i];
+        printf("%.4f \t", e[i]);
+    }
+    printf("\nSum: %.4f\n", sum);
+    return sum;
+}
+
+void normalize_cell(float *inout_cell, int n_elem)
+{
+    int i = 0;
+    float sum = 0;
+    for (i=0; i<n_elem; i++)
+        sum += inout_cell[i];
+    for (i=0; i<n_elem; i++)
+        inout_cell[i] /= sum;
+}
+
 ///////////////////////////
 //                       //
 //   Merging functions   //
@@ -89,10 +112,10 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
 {
     int A = 0, B = 0, C = 0, i = 0;
     float buf[N_CLASSES] = {0};
-    float res;
+    float res = 0;
     float K = 0.0;
     if(dempster)
-        K = 1.0 / (1.0 - Konflict(inout_cell, cell, n_elem));
+        K = Konflict(inout_cell, cell, n_elem);
     for (A = 1; A<n_elem; A++) // A starts from 1 since there must be A != Ø
     {
         for(B=0; B<n_elem; B++)
@@ -108,7 +131,7 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
             }
         }
         if(dempster)
-            buf[A] *= K;
+            buf[A] /= 1.0 - K;
     }
     for(i = 0; i<N_CLASSES; i++)
         inout_cell[i] = buf[i];
@@ -136,7 +159,11 @@ void disjunctive(float *inout_cell, float *cell, int n_elem)
         }
     }
     for(i = 0; i<N_CLASSES; i++)
+    {
         inout_cell[i] = buf[i];
+        printf("oui");
+    }
+        
     // memcpy(inout_cell, buf, sizeof(float)*n_elem);
 }
 
@@ -144,13 +171,18 @@ float Konflict(float *inout_cell, float *cell, int n_elem)
 {
     int B = 0, C = 0;
     float res = 0;
+    // printf("Konflict (inout_cell then cell):\n");
+    // printsum(inout_cell, n_elem);
+    // printsum(cell, n_elem);
     for(B=0; B<n_elem; B++)
     {
         for(C=0; C<n_elem; C++)
         {
-            if((B|C) == 0)
+            if((B&C) == 0)
             {
-                res += (float) *(inout_cell + B) * (float) *(cell + C);
+                // printf("B (%d) & C (%d) : %x\n", B, C, (B&C));
+                // printf("%.4f x %.4f\n", inout_cell[B], cell[C]);
+                res += inout_cell[B] * cell[C];
             }
         }
     }
@@ -175,20 +207,53 @@ int main(int argc, char **argv)
     float U[8] = {0.0, 0, 0, 0, 0, 0, 0, 1.0};
     float T[8] = {0.0, 0, 0, 0, 0.7, 0.05, 0.05, 0.2};
 
+    float A[8] = {0.0, 0, 0, 0, 0, 0, 0, 1.0};
+    float B[8] = {0, 0.94, 0, 0.02, 0, 0.02, 0.02, 0};
+
+
     // float A[4][8] = {U, U, U, U};
     // float B[4][8] = {T, T, T, T};
 
     float out[8] = {0};
-    memcpy(out, U, 8*sizeof(float));
+    memcpy(out, A, 8*sizeof(float));
 
-    conjunctive(out, U, 8, true); 
-    conjunctive(out, U, 8, true);
-    conjunctive(out, U, 8, true);
-    conjunctive(out, U, 8, true);
-    conjunctive(out, U, 8, true);
-    conjunctive(out, U, 8, true);
-    conjunctive(out, T, 8, true);
-    conjunctive(out, T, 8, true);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    // normalize_cell(out, 8);
+    // printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    conjunctive(out, B, 8, false);
+    printsum(out, 8);
+
+    // true -> Sum: 0.8681
+    // false -> Sum: 0.8681
+
+    // conjunctive(out, U, 8, true); 
+    // conjunctive(out, U, 8, true);
+    // conjunctive(out, U, 8, true);
+    // conjunctive(out, U, 8, true);
+    // conjunctive(out, U, 8, true);
+    // conjunctive(out, U, 8, true);
+    // conjunctive(out, T, 8, true);
+    // conjunctive(out, T, 8, true);
 
 
     
