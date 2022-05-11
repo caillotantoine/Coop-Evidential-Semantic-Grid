@@ -116,7 +116,8 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
     float K = 0.0;
     if(dempster)
         K = Konflict(inout_cell, cell, n_elem);
-    for (A = 1; A<n_elem; A++) // A starts from 1 since there must be A != Ø
+    for (A = 0; A<n_elem; A++) // A starts from 1 since there must be A != Ø
+                               // A start from 0, dans le cas de dempster, ce sera normalisé, sinon, c'est un indicateur d'erreur! 
     {
         for(B=0; B<n_elem; B++)
         {
