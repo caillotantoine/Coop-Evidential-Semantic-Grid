@@ -78,7 +78,7 @@ def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, ma
             centered_fps = [(bboxsize.vec4().get().T * m).T for m in bin_mask]
 
             fps = [poseT @ v for v in centered_fps]
-            fps2 = [np.array([[v[0]-mapcenter.x(), v[1]-mapcenter.y(), 0.0, 1.0]]).T for v in fps]
+            fps2 = [np.array([[v[0]-mapcenter.x(), v[1]-mapcenter.y(), 0.0, 1.0]], dtype=float).T for v in fps]
             if antoine:
                 fps_pix = np.array([np.array((((v * STEPGRID) + (GRIDSIZE / 2)).T)[0][[0, 2]], dtype=int) for v in fps2])
             else:
