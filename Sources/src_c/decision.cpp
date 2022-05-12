@@ -10,7 +10,15 @@
 #define DEMPSTER            0x00
 #define CONJUNCTIVE         0x01
 #define DISJUNCTIVE         0x02
-#define MAXBBA              0x03
+
+
+#define VALMAX              -1
+#define MAXBETP             0
+#define MAXBEL              1
+#define MAXPL               2
+#define MAXBBA              3
+#define PEST                4
+#define WPEST               5
 
 #define VEHICLE_ELEM_ID     0b001
 #define PEDESTRIAN_ELEM_ID  0b010
@@ -73,6 +81,24 @@ float pl(float *elems, unsigned char set, int nFE)
     return sum;
 }
 
+float Pest(float *elems, unsigned char set, int nFE)
+{
+    float vbel = 0.0;
+    float vpl = 0.0;
+    vbel = bel(elems, set, nFE);
+    vpl = pl(elems, set, nFE);
+    return ((vpl - vbel) / 2.0) + vbel;
+}
+
+float wPest(float *elems, unsigned char set, int nFE)
+{
+    float vbel = 0.0;
+    float vpl = 0.0;
+    vbel = bel(elems, set, nFE);
+    vpl = pl(elems, set, nFE);
+    return (((vpl - vbel) / 2.0) + vbel) * (1-(vpl - vbel));
+}
+
 void decision_CPP(float *evid_map_in, unsigned char *sem_map, int gridsize, int nFE, int method)
 {
     int i = 0, j = 0, max_elem_id = 0;
@@ -96,20 +122,28 @@ void decision_CPP(float *evid_map_in, unsigned char *sem_map, int gridsize, int 
                     val = evid_map_in[i*3 + j];
                     break;
                     
-                case 0:
+                case MAXBETP:
                     val = betP((evid_map_in + i * nFE), VEHICLE_ELEM_ID<<j, nFE);
                     break;
 
-                case 1:
+                case MAXBEL:
                     val = bel((evid_map_in + i * nFE), VEHICLE_ELEM_ID<<j, nFE);
                     break;
 
-                case 2:
+                case MAXPL:
                     val = pl((evid_map_in + i * nFE), VEHICLE_ELEM_ID<<j, nFE);
                     break;
 
                 case MAXBBA:
                     val = evid_map_in[(i * nFE) + (VEHICLE_ELEM_ID<<j)];
+                    break;
+
+                case PEST:
+                    val = Pest((evid_map_in + i * nFE), VEHICLE_ELEM_ID<<j, nFE);
+                    break;
+
+                case WPEST:
+                    val = wPest((evid_map_in + i * nFE), VEHICLE_ELEM_ID<<j, nFE);
                     break;
 
                 default:
