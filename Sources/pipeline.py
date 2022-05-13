@@ -58,13 +58,14 @@ def get_local_maps(frame:int, agents:List[Agent], mapcenter:vec2, bbox_noise=(0.
     # print(f"get_local_maps frame {frame}")
     bboxes = [agent.get_visible_bbox(frame=frame, plot=None, drawBBOXonImg=True, bbox_noise=bbox_noise) for agent in agents]
     (bbox_list, kmat, camT, label, img) = zip(*bboxes)
+    # print(f"labels : {label}")
 
 
     camTnp = camT[3].get_translation()
     # print(camTnp)
     # bboxes = get_bbox_par(data, False)
     # create the evidential map + the mask for each agent
-    mask_eveid_maps = [generate_evid_grid(agent_out=d, mapcenter=mapcenter) for d in bboxes]
+    mask_eveid_maps = [generate_evid_grid(whoami=d[3], agent_out=d, mapcenter=mapcenter) for d in bboxes]
 
     # datashape conversion
     # [(mask, evid_map, polygons)] -> [mask], [evid_maps]

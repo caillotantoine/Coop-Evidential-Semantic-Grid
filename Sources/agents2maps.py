@@ -23,6 +23,7 @@ def readFE(is_Infra=False) -> List[List[float]]:
         
     try:
         FE = data['FE_mat_infra']
+        # print(f'Read infra FE \n{FE}')
         return FE
     except:
         print("No FE_mat_infra in the json file")
@@ -30,7 +31,7 @@ def readFE(is_Infra=False) -> List[List[float]]:
         return FE
 
 # Generate the local evidential map from one agent
-def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, mapcenter:vec2 = vec2(x=0.0, y=0.0), agent_3D:List[Bbox3D] = None, antoine=False):
+def generate_evid_grid(whoami:str = None, agent_out:Tuple[List[Bbox2D], TMat, TMat, str, np.ndarray] = None, mapcenter:vec2 = vec2(x=0.0, y=0.0), agent_3D:List[Bbox3D] = None, antoine=False):
 
     egg = EGG(mapsize=MAPSIZE, gridsize=(GRIDSIZE)) # create an Evidential Grid Generator
     mask = np.zeros(shape=(GRIDSIZE, GRIDSIZE), dtype=np.uint8) # empty mask map
@@ -39,7 +40,7 @@ def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, ma
 
     if agent_out != None:
         # Extract 2D footprints and the label from 2d bounding box of the dataset
-        eggout = egg.projector_resterizer(agent_out, confjsonpath=args.json_path)
+        eggout = egg.projector_resterizer(agent_out, confjsonpath=args.json_path, fpSizeMax={'vehicle': 6.00, 'pedestrian': 1.00})
 
         # Extract the 2D footprints 
         fp_poly = np.array([np.array([(v.get().T)[0] for v in poly], dtype=np.float32) for (poly, _) in eggout])
@@ -92,8 +93,14 @@ def generate_evid_grid(agent_out:Tuple[List[Bbox2D], TMat, TMat, str] = None, ma
         
     # define the number of focal elements
     nFE = 8
+
+    # print(whoami)
+    
     # grab the focal elements from a json file
-    FE = readFE(is_Infra=False)
+    if whoami == 'infrastructure':
+        FE = readFE(is_Infra=True)
+    else:
+        FE = readFE(is_Infra=False)
 
     # example of focal elements
     # #      Ø    V    P    VP   T    VT   PT   VPT
