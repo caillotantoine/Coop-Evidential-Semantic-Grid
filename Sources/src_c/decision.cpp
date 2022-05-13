@@ -35,6 +35,8 @@ void decision_CPP(float *evid_map_in, unsigned char *sem_map, int gridsize, int 
 float betP(float *elems, unsigned char set, int nFE);
 float bel(float *elems, unsigned char set, int nFE);
 float pl(float *elems, unsigned char set, int nFE);
+float Pest(float *elems, unsigned char set, int nFE);
+float wPest(float *elems, unsigned char set, int nFE);
 
 extern "C" {
     void decision(float *evid_map_in, unsigned char *sem_map, int gridsize, int nFE, int method)
@@ -43,12 +45,26 @@ extern "C" {
 
 int main(int argc, char **argv)
 {
-    float elems[2][2][8] = {{{0.0, 0.6, 0.05, 0.1, 0.05, 0.1, 0.0, 0.1}, {0.0, 0.05, 0.6, 0.1, 0.05, 0.1, 0.0, 0.1}}, {{0.0, 0.05, 0.05, 0.1, 0.6, 0.1, 0.0, 0.1}, {0.0, 0.1, 0.1, 0.2, 0.1, 0.2, 0.15, 0.15}}};
-    int nFE = 8;
-    unsigned char out[2][2] = {0};
-    printf("betP(V) = %f\n", betP((float *) elems + 2 * nFE , VEHICLE_ELEM_ID, nFE));
-    decision_CPP((float *) elems, (unsigned char *) out, 2, nFE, 0);
+    // float elems[2][2][8] = {{{0.0, 0.6, 0.05, 0.1, 0.05, 0.1, 0.0, 0.1}, {0.0, 0.05, 0.6, 0.1, 0.05, 0.1, 0.0, 0.1}}, {{0.0, 0.05, 0.05, 0.1, 0.6, 0.1, 0.0, 0.1}, {0.0, 0.1, 0.1, 0.2, 0.1, 0.2, 0.15, 0.15}}};
+    // int nFE = 8;
+    // unsigned char out[2][2] = {0};
+    // printf("betP(V) = %f\n", betP((float *) elems + 2 * nFE , VEHICLE_ELEM_ID, nFE));
+    // decision_CPP((float *) elems, (unsigned char *) out, 2, nFE, 0);
     //printf("%d\n", COUNT_BITS(3));
+    // float res[8] = {0.0000,  0.1346,  0.6250,  0.0962,  0.0865,  0.0577,  0.0000,  0.0000 };
+    float res[8] = {0.1680,  0.1120,  0.5200,  0.0800,  0.0720,  0.0480,  0.0000,  0.0000};
+    printf("bel: %.4f\n", bel(res, 0x01, 8));
+    printf("pl: %.4f\n", pl(res, 0x01, 8));
+    printf("Pest: %.4f\n", Pest(res, 0x01, 8));
+    printf("wPest: %.4f\n", wPest(res, 0x01, 8));
+
+    printf("\n\n");
+
+    printf("bel: %.4f\n", bel(res, 0x02, 8));
+    printf("pl: %.4f\n", pl(res, 0x02, 8));
+    printf("Pest: %.4f\n", Pest(res, 0x02, 8));
+    printf("wPest: %.4f\n", wPest(res, 0x02, 8));
+
     return 0;
 }
 
@@ -105,6 +121,8 @@ void decision_CPP(float *evid_map_in, unsigned char *sem_map, int gridsize, int 
     float val = 0;
     float maxprev = -1.0;
     const unsigned char LUT[3] = {VEHICLE_MASK, PEDESTRIAN_MASK, TERRAIN_MASK};
+
+    // printf("Methode : %d\n", method);
 
     // printf("1 : %x\n", LUT[0]);
     // printf("2 : %x\n", LUT[1]);
