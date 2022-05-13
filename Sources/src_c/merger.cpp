@@ -153,6 +153,7 @@ void dempster(float *inout_cell, float *cell, int n_elem)
     float res = 0;
     float K = 0.0;
 
+    inout_cell[0] = 0.0;
     K = Konflict(inout_cell, cell, n_elem);
         
     for (A = 1; A<n_elem; A++) // A starts from 1 since there must be A != Ø
@@ -212,9 +213,9 @@ float Konflict(float *inout_cell, float *cell, int n_elem)
     // printf("Konflict (inout_cell then cell):\n");
     // printsum(inout_cell, n_elem);
     // printsum(cell, n_elem);
-    for(B=1; B<n_elem; B++)
+    for(B=0; B<n_elem; B++)
     {
-        for(C=1; C<n_elem; C++)
+        for(C=0; C<n_elem; C++)
         {
             if((B&C) == 0)
             {
@@ -290,7 +291,6 @@ int main(int argc, char **argv)
     // conjunctive(out, T, 8, true);
     // conjunctive(out, T, 8, true);
 
-à
     
     return 0;
 }
