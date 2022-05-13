@@ -5,7 +5,7 @@ argparser = argparse.ArgumentParser(description=__doc__)
 argparser.add_argument(
     '--algo',
     metavar='A',
-    default='Conjunctive',
+    default='Dempster',
     help='Choose between Dempster, Conjunctive and Disjunctive (default Dempster).')
 argparser.add_argument(
     '--mean',
@@ -27,7 +27,7 @@ argparser.add_argument(
 argparser.add_argument(
     '--loopback_evid',
     type=bool,
-    default=True,
+    default=False,
     help='Loop back the t-1 evidential map as an entry of the agents (default False).')
 argparser.add_argument(
     '--start',
@@ -58,7 +58,7 @@ argparser.add_argument(
     help='Ending point in the dataset (default 500).')
 argparser.add_argument(
     '--dataset_path',
-    default='/home/caillot/Documents/Datasets/CARLA_Dataset_original', # _intersec_dense
+    default='/home/caillot/Documents/Datasets/CARLA_Dataset_B', # _intersec_dense _original _B
     help='Path of the dataset.')
 argparser.add_argument(
     '--save_path',
@@ -67,5 +67,5 @@ argparser.add_argument(
 
 argparser.add_argument(
     '--json_path',
-    default='./Sources/configs/config_perfect_full_testBBA16.json',
+    default='./Sources/configs/test_config/full_NN_1.json',
     help='Configuration json file path.')

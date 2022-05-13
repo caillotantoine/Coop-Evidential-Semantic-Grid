@@ -52,7 +52,7 @@ for dir in DIR_NAMES:
             sums[field] = data[field].sum()
 
         IoUw = {'Algorithm': filename.replace('_', ' & ')}
-        F1w = {'Algorithm': filename.replace('_', ' & ')}
+        F1w = {'Algorithm': filename.replace('_', ' & ')} 
         for label in LABELS:
 
             IoUw[f'IoU_{label}'] = IoU(sums[f'{label}_TP'], sums[f'{label}_FP'], sums[f'{label}_FN'])

@@ -8,5 +8,8 @@
     "python.analysis.extraPaths": [
         "/opt/ros/noetic/lib/python3/dist-packages",
         "./Playground/unit_test/projection"
-    ]
+    ],
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }
