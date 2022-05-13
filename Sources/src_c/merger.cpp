@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <assert.h>
 
 #define VEHICLE_MASK        0b01000000
 #define PEDESTRIAN_MASK     0b10000000
@@ -20,7 +21,8 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
 void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, int n_agents, unsigned char method);
 
 // Merging functions, either for CUDA and CPP
-void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster);
+void conjunctive(float *inout_cell, float *cell, int n_elem);
+void dempster(float *inout_cell, float *cell, int n_elem);
 void disjunctive(float *inout_cell, float *cell, int n_elem);
 float Konflict(float *inout_cell, float *cell, int n_elem);
 
@@ -88,7 +90,19 @@ float printsum(float *e, float n)
         sum += e[i];
         printf("%.4f \t", e[i]);
     }
-    printf("\nSum: %.4f\n", sum);
+    printf("\nSum: %f\n", sum);
+    printf("Sum (hex): %x\n\n", sum);
+    return sum;
+}
+
+float sum(float *e, float n)
+{
+    int i = 0;
+    float sum = 0;
+    for(i=0; i<n; i++)
+    {
+        sum += e[i];
+    }
     return sum;
 }
 
@@ -108,21 +122,13 @@ void normalize_cell(float *inout_cell, int n_elem)
 //                       //
 ///////////////////////////
 
-void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
+void conjunctive(float *inout_cell, float *cell, int n_elem)
 {
-    int A = 0, B = 0, C = 0, i = 0;
+    int A = 0, B = 0, C = 0;
     float buf[N_CLASSES] = {0};
     float res = 0;
-    float K = 0.0;
-    int start = 0;
-    if(dempster)
-    {
-        K = Konflict(inout_cell, cell, n_elem);
-        start = 1;
-    }
         
-    for (A = start; A<n_elem; A++) // A starts from 1 since there must be A != Ø
-                               // A start from 0, dans le cas de dempster, ce sera normalisé, sinon, c'est un indicateur d'erreur! 
+    for (A = 0; A<n_elem; A++)
     {
         for(B=0; B<n_elem; B++)
         {
@@ -136,17 +142,43 @@ void conjunctive(float *inout_cell, float *cell, int n_elem, bool dempster)
                 }
             }
         }
-        if(dempster)
-            buf[A] /= 1.0 - K;
     }
-    for(i = 0; i<N_CLASSES; i++)
-        inout_cell[i] = buf[i];
-    // memcpy(inout_cell, buf, sizeof(float)*n_elem);
+    memcpy(inout_cell, buf, sizeof(float)*n_elem);
+}
+
+void dempster(float *inout_cell, float *cell, int n_elem)
+{
+    int A = 0, B = 0, C = 0;
+    float buf[N_CLASSES] = {0}; // TODO malloc CPP
+    float res = 0;
+    float K = 0.0;
+
+    K = Konflict(inout_cell, cell, n_elem);
+        
+    for (A = 1; A<n_elem; A++) // A starts from 1 since there must be A != Ø
+    {
+        for(B=0; B<n_elem; B++)
+        {
+            for(C=0; C<n_elem; C++)
+            {
+                if((B&C) == A)
+                {
+                    res = inout_cell[B] * cell[C];
+                    // printf("A %f, %f, %f\n",*(inout_cell + B), *(cell + C), res);
+                    buf[A] += res;
+                }
+            }
+        }
+        buf[A] /= 1.0 - K;
+    }
+    buf[0] = K;
+
+    memcpy(inout_cell, buf, sizeof(float)*n_elem);
 }
 
 void disjunctive(float *inout_cell, float *cell, int n_elem)
 {
-    int A = 0, B = 0, C = 0, i=0;
+    int A = 0, B = 0, C = 0;
     float buf[N_CLASSES] = {0};
     float res;
     for (A = 0; A<n_elem; A++)
@@ -164,13 +196,13 @@ void disjunctive(float *inout_cell, float *cell, int n_elem)
             }
         }
     }
-    for(i = 0; i<N_CLASSES; i++)
-    {
-        inout_cell[i] = buf[i];
-        printf("oui");
-    }
+    // for(i = 0; i<N_CLASSES; i++)
+    // {
+    //     inout_cell[i] = buf[i];
+    //     printf("oui");
+    // }
         
-    // memcpy(inout_cell, buf, sizeof(float)*n_elem);
+    memcpy(inout_cell, buf, sizeof(float)*n_elem);
 }
 
 float Konflict(float *inout_cell, float *cell, int n_elem)
@@ -180,9 +212,9 @@ float Konflict(float *inout_cell, float *cell, int n_elem)
     // printf("Konflict (inout_cell then cell):\n");
     // printsum(inout_cell, n_elem);
     // printsum(cell, n_elem);
-    for(B=0; B<n_elem; B++)
+    for(B=1; B<n_elem; B++)
     {
-        for(C=0; C<n_elem; C++)
+        for(C=1; C<n_elem; C++)
         {
             if((B&C) == 0)
             {
@@ -217,23 +249,32 @@ int main(int argc, char **argv)
     float B[8] = {0, 0.94, 0, 0.02, 0, 0.02, 0.02, 0};
     float C[8] = {0.0,0.0,0.0,0.0,0.75,0.125,0.125,0.0};
 
+    float cell_1[8] = {0, 0, 0, 0.7, 0, 0, 0, 0.3};
+    float cell_2[8] = {0, 0, 0, 0, 0, 0, 0.6, 0.4};
+    float cell_3[8] = {0, 0, 0.4, 0.2, 0, 0.4, 0, 0};
+
 
     // float A[4][8] = {U, U, U, U};
     // float B[4][8] = {T, T, T, T};
+    printf("%x\n", (float) 1.0);
 
     float out[8] = {0};
-    memcpy(out, C, 8*sizeof(float));
+    memcpy(out, cell_1, 8*sizeof(float));
 
-    printsum(out, 8);
+    assert((printsum(out, 8)-1.0)<0.001);
 
-    conjunctive(out, A, 8, true);
-    printsum(out, 8);
+    conjunctive(out, cell_2, 8);
+    assert((printsum(out, 8)-1.0)<0.001);
 
-    conjunctive(out, B, 8, true);
-    printsum(out, 8);
+    conjunctive(out, cell_3, 8);
+    assert((printsum(out, 8)-1.0)<0.001);
 
-    conjunctive(out, C, 8, true);
-    printsum(out, 8);
+    
+    // conjunctive(out, B, 8, true);
+    // printsum(out, 8);
+
+    // conjunctive(out, C, 8, true);
+    // printsum(out, 8);
 
 
 
@@ -249,7 +290,7 @@ int main(int argc, char **argv)
     // conjunctive(out, T, 8, true);
     // conjunctive(out, T, 8, true);
 
-
+à
     
     return 0;
 }
@@ -331,7 +372,7 @@ void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, in
             switch(method)
             {
                 case CONJUNCTIVE:
-                    conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, false);
+                    conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE);
                     break;
                 
                 case DISJUNCTIVE:
@@ -339,7 +380,7 @@ void DST_merger_CPP(float *evid_maps_in, float *inout, int gridsize, int nFE, in
                     break;
 
                 case DEMPSTER:
-                    conjunctive((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE, true);
+                    dempster((inout + i*nFE), (evid_maps_in + i*nFE*n_agents + j*nFE), nFE);
                     break;
 
                 default:
