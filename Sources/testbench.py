@@ -251,6 +251,8 @@ def pipeline(state:GUI_State):
                 save_map(f'{SAVE_PATH}/{ALGO}/{decision_maker}/', f'{frame:06d}.png', sem_map)
                 save_map(f'{SAVE_PATH}/{ALGO}/{decision_maker}/Dif/', f'{frame:06d}.png', diff)
 
+    state.quit_gui(None)
+
 
 
 if __name__ == '__main__':
@@ -294,6 +296,7 @@ if __name__ == '__main__':
             pass
 
     pipeline_p.join()
+    plt.close('all')
 
 
 

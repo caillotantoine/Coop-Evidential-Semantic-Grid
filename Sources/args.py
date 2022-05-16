@@ -11,7 +11,7 @@ argparser.add_argument(
     '--mean',
     metavar='M',
     type=bool,
-    default=True,
+    default=False,
     help='Compute the mean (default False).')
 argparser.add_argument(
     '--gui',
@@ -22,7 +22,7 @@ argparser.add_argument(
 argparser.add_argument(
     '--save_img',
     type=bool,
-    default=True,
+    default=False,
     help='Save maps as images (default False).')
 argparser.add_argument(
     '--loopback_evid',
@@ -33,32 +33,32 @@ argparser.add_argument(
     '--start',
     metavar='S',
     type=int,
-    default=50, #10
+    default=10, #10
     help='Starting point in the dataset (default 10).')
 argparser.add_argument(
     '--pdilate',
     type=int,
-    default=-1, #10
+    default=-1, #-1
     help='Pedestrian Dilation Factor. -1: Off, Choose a value between 0 and 5. (default -1)')
 argparser.add_argument(
     '--cooplvl',
     type=int,
-    default=0, #10
+    default=2, #2
     help='Number of observation to be a valid measure. -1: All, Choose a value between 0 and N users. (default 2)')
 argparser.add_argument(
     '--gdilate',
     type=int,
-    default=-1, #10
+    default=-1, #-1
     help='Dilation Factor for every object at mask level. -1: Off, Choose a value between 0 and 5. (default -1)')
 argparser.add_argument(
     '--end',
     metavar='E',
     type=int,
-    default=150,
+    default=500,
     help='Ending point in the dataset (default 500).')
 argparser.add_argument(
     '--dataset_path',
-    default='/home/caillot/Documents/Datasets/CARLA_Dataset_B', # _intersec_dense _original _B
+    default='/home/caillot/Documents/Datasets/CARLA_Dataset_original', # _intersec_dense _original _B
     help='Path of the dataset.')
 argparser.add_argument(
     '--save_path',
