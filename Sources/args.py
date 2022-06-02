@@ -11,7 +11,7 @@ argparser.add_argument(
     '--mean',
     metavar='M',
     type=bool,
-    default=False,
+    default=True,
     help='Compute the mean (default False).')
 argparser.add_argument(
     '--gui',
@@ -22,7 +22,7 @@ argparser.add_argument(
 argparser.add_argument(
     '--save_img',
     type=bool,
-    default=False,
+    default=True,
     help='Save maps as images (default False).')
 argparser.add_argument(
     '--loopback_evid',

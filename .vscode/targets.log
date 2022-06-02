@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Wed May 18 10:38:44 2022
+# Make data base, printed on Thu Jun  2 10:41:02 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ SNAP_INSTANCE_KEY =
 # environment
 GJS_DEBUG_OUTPUT = stderr
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-d8efbda0-5f37-40c4-a6ee-6ad4c4c0f6bc.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-0ccb8937-89fd-4ec0-baca-97289feb9cde.sock
 # environment
 LC_NAME = fr_FR.UTF-8
 # environment
@@ -45,7 +45,7 @@ QT_ACCESSIBILITY = 1
 # environment
 SNAP_INSTANCE_NAME = code
 # environment
-GDK_PIXBUF_MODULEDIR = /snap/code/96/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders
+GDK_PIXBUF_MODULEDIR = /snap/code/97/usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders
 # environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # default
@@ -63,7 +63,7 @@ VSCODE_LOG_STACK = false
 # automatic
 %F = $(notdir $%)
 # environment
-VSCODE_CODE_CACHE_PATH = /home/caillot/.config/Code/CachedData/da15b6fd3ef856477bf6f4fb29ba1b7af717770d
+VSCODE_CODE_CACHE_PATH = /home/caillot/.config/Code/CachedData/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
 # environment
 LANG = C
 # environment
@@ -105,7 +105,7 @@ SNAP_REEXEC =
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 7001
+VSCODE_PID = 6632
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -113,7 +113,7 @@ XDG_SESSION_TYPE = x11
 # environment
 BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
-SESSION_MANAGER = local/caillot-Precision-5540:@/tmp/.ICE-unix/2646,unix/caillot-Precision-5540:/tmp/.ICE-unix/2646
+SESSION_MANAGER = local/caillot-Precision-5540:@/tmp/.ICE-unix/3206,unix/caillot-Precision-5540:/tmp/.ICE-unix/3206
 # automatic
 *F = $(notdir $*)
 # environment
@@ -145,7 +145,7 @@ MAKE = $(MAKE_COMMAND)
 # environment
 SNAP_COOKIE = hP0JdrdF_EyscL5K1x2b0M4Q16avQxbgxyWustGztqBSHLMSV6Pr
 # environment
-PATH = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+PATH = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/opt/Xilinx/13.2/ISE_DS/ISE/bin/lin64/
 # default
 MAKEFILES := 
 # environment
@@ -157,11 +157,11 @@ SNAP_USER_COMMON = /home/caillot/snap/code/common
 # environment
 LC_TIME = fr_FR.UTF-8
 # environment
-SNAP = /snap/code/96
+SNAP = /snap/code/97
 # environment
-INVOCATION_ID = 15269ad55fbe4b5bbbc83b2c67642e56
+INVOCATION_ID = c06b5e92b47142b2a1625cc547538d18
 # environment
-SNAP_REVISION = 96
+SNAP_REVISION = 97
 # environment
 SNAP_REAL_HOME = /home/caillot
 # environment
@@ -195,7 +195,7 @@ SNAP_ARCH = amd64
 # makefile
 .DEFAULT_GOAL := 
 # environment
-SYSTEMD_EXEC_PID = 2687
+SYSTEMD_EXEC_PID = 3246
 # environment
 DISPLAY = :1
 # environment
@@ -207,17 +207,17 @@ MAKE_VERSION := 4.3
 # environment
 DISABLE_WAYLAND = 1
 # environment
-SNAP_DATA = /var/snap/code/96
+SNAP_DATA = /var/snap/code/97
 # environment
 SNAP_CONTEXT = hP0JdrdF_EyscL5K1x2b0M4Q16avQxbgxyWustGztqBSHLMSV6Pr
 # environment
-MANAGERPID = 2088
+MANAGERPID = 2541
 # environment
 LC_MEASUREMENT = fr_FR.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 6965
+GIO_LAUNCHED_DESKTOP_FILE_PID = 6071
 # environment
-_ = /snap/code/96/usr/share/code/code
+_ = /snap/code/97/usr/share/code/code
 # environment
 LC_PAPER = fr_FR.UTF-8
 # environment
@@ -227,7 +227,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # environment
 GDK_PIXBUF_MODULE_FILE = /home/caillot/snap/code/common/.cache/gdk-pixbuf-loaders.cache
 # environment
-JOURNAL_STREAM = 8:35499
+JOURNAL_STREAM = 8:39532
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -239,17 +239,17 @@ QT_IM_MODULE = ibus
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # environment
-VSCODE_IPC_HOOK = /run/user/1000/vscode-d60e3e71-1.67.1-main.sock
+VSCODE_IPC_HOOK = /run/user/1000/vscode-d60e3e71-1.67.2-main.sock
 # environment
 SNAP_NAME = code
 # environment
-GSETTINGS_SCHEMA_DIR = /snap/code/96/usr/share/glib-2.0/schemas
+GSETTINGS_SCHEMA_DIR = /snap/code/97/usr/share/glib-2.0/schemas
 # default
 .RECIPEPREFIX := 
 # automatic
 <F = $(notdir $<)
 # environment
-SNAP_VERSION = da15b6fd
+SNAP_VERSION = c3511e6c
 # default
 SUFFIXES := 
 # environment
@@ -261,7 +261,7 @@ SNAP_COMMON = /var/snap/code/common
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell nocomment grouped-target extra-prereqs archives jobserver output-sync check-symlink load
 # environment
-SNAP_USER_DATA = /home/caillot/snap/code/96
+SNAP_USER_DATA = /home/caillot/snap/code/97
 # environment
 XDG_MENU_PREFIX = gnome-
 # environment
@@ -279,10 +279,10 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
-# . (device 66306, inode 48893025): 10 files, no impossibilities.
+# . (device 66306, inode 48893025): 11 files, no impossibilities.
 
  
-# 10 files, no impossibilities in 1 directories.
+# 11 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -332,12 +332,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 18 / storage = 193 B / avg = 10 B
-# current buf: size = 8162 B / used = 193 B / count = 18 / avg = 10 B
+# strcache buffers: 1 (0) / strings = 19 / storage = 202 B / avg = 10 B
+# current buf: size = 8162 B / used = 202 B / count = 19 / avg = 10 B
 
-# strcache performance: lookups = 21 / hit rate = 14%
+# strcache performance: lookups = 22 / hit rate = 13%
 # hash-table stats:
-# Load=18/8192=0%, Rehash=0, Collisions=0/21=0%
-# Finished Make data base on Wed May 18 10:38:44 2022
+# Load=19/8192=0%, Rehash=0, Collisions=0/22=0%
+# Finished Make data base on Thu Jun  2 10:41:02 2022
 
  

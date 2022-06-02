@@ -317,6 +317,7 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
 {
     int l = 0, i = 0, j = 0;
     float normFactor = 0.0;
+    float normFactor2 = 0.0;
 
     unsigned char FEROW = 1;
     for(i=0; i<gridsize*gridsize; i++)
@@ -327,36 +328,42 @@ void mean_merger_cpp(unsigned char *masks, int gridsize, int n_agents, float *ou
             {
                 case VEHICLE_MASK:
                     FEROW = 1;
+                    normFactor = get_normFactor(FE, nFE, FEROW);
                     for(j = 0; j<3; j++)
-                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                        out[(i*3) + j] *= FE[FEROW * nFE + (1<<j)] * normFactor;
                     break;
 
                 case PEDESTRIAN_MASK:
                     FEROW = 2;
                     normFactor = get_normFactor(FE, nFE, FEROW);
                     for(j = 0; j<3; j++)
-                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                        out[(i*3) + j] *= FE[FEROW * nFE + (1<<j)] * normFactor;
                     break;
 
                 case TERRAIN_MASK:
                     FEROW = 3;
                     normFactor = get_normFactor(FE, nFE, FEROW);
                     for(j = 0; j<3; j++)
-                        out[(i*3) + j] += FE[FEROW * nFE + (1<<j)] * normFactor;
+                        out[(i*3) + j] *= FE[FEROW * nFE + (1<<j)] * normFactor;
                     break;
                 
                 default:
                     for(j = 0; j<3; j++)
-                        out[(i*3) + j] += 0.5;
-                    // out[(i*3) + 0] += 0.5;
-                    // out[(i*3) + 1] += 0.5;
-                    // out[(i*3) + 2] += 0.5;
+                        out[(i*3) + j] *= 0.33333333333;
                     break;
             }
+
+            normFactor2 = 0.0;
+            for(j = 0; j<3; j++)
+                normFactor2 += out[(i*3) + j];
+
+            for(j = 0; j<3; j++)
+                out[(i*3) + j] *= 1.0 / normFactor2;
+
         }
     }
-    for(i = 0; i<(gridsize*gridsize*3); i++)
-        out[i] /= n_agents; ////
+    // for(i = 0; i<(gridsize*gridsize*3); i++)
+    //     out[i] /= n_agents; ////
 }
 
 // Merger function to merge the cells using Dempster Shaffer Theory 

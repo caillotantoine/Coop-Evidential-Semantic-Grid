@@ -18,7 +18,8 @@ def mean_merger_w( masks:np.ctypeslib.ndpointer(dtype=np.uint8), gridsize:c_int,
 
 
 def mean_merger_fast(masks, gridsize, FE) -> np.ndarray:
-    out = np.zeros(shape=(gridsize, gridsize, 3), dtype=np.float32)
+    out = np.ones(shape=(gridsize, gridsize, 3), dtype=np.float32)
+    # Start with all ones. Thus, the first run will set the map at the value of the first agent's map.
     masks_arr = np.stack(masks, axis=2)
     mean_merger_w(masks_arr, gridsize, len(masks), out, FE, len(FE[1]))
     return out
